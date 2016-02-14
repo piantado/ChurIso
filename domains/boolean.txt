@@ -1,0 +1,17 @@
+[unique true false and or not]
+
+[constrain true  = (and true true)]
+[constrain false = (and true false)]
+[constrain false = (and false true)]
+[constrain false = (and false false)]
+
+[constrain true  = (or true true)]
+[constrain true  = (or true false)]
+[constrain true  = (or false true)]
+[constrain false = (or false false)]
+
+[constrain false = (not true)]
+[constrain true  = (not false)]
+
+[show (and true false) ]
+[show (or false true) ]

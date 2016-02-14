@@ -1,0 +1,27 @@
+# Add an example of an arbitrary graph
+
+[unique braintree downtown park alewife riverside government northstation bowdoin state wonderland downtown foresthill oakgrove]
+
+# red line
+[constrain alewife  = (north park)]
+[constrain park     = (north downtown)]
+
+# green line
+[constrain park         = (north riverside)]
+[constrain government   = (north park)]
+[constrain northstation = (north government)]
+
+# red line 
+[constrain downtown = (north braintree)]
+
+# blue line
+[constrain government = (north bowdoin)]
+[constrain state      = (north government)]
+[constrain wonderland = (north state)]
+
+# orange
+[constrain downtown     = (north foresthill)]
+[constrain state        = (north downtown)]
+[constrain northstation = (north state)]
+[constrain oakgrove     = (north northstation)]
+

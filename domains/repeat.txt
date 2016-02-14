@@ -1,0 +1,8 @@
+
+# Here is a version ith variables:
+
+[constrain (%f (%f %x)) = ((repeat %f) %x) ]
+
+[show ((repeat (repeat %f)) %x) ]
+
+[variable %x %f]

@@ -1,0 +1,21 @@
+[unique barak sasha malia michelle]
+[unique father mother sister husband wife]
+
+# enter in some relations
+[constrain barak (father sasha)]
+[constrain barak (father malia)]
+
+[constrain michelle (mother sasha)]
+[constrain michelle (mother malia)]
+
+[constrain sasha (sister malia)]
+[constrain malia (sister sasha)]
+
+[constrain barak (husband michelle)]
+[constrain michelle (wife barak) ]
+
+[show (wife michelle)]
+[show (husband barak)]
+[show (father barak)]
+[show (mother barak)]
+
