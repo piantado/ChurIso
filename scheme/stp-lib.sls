@@ -2,7 +2,7 @@
  (stp-lib)
  (export displayn displaynerr null first second third fourth fifth sixth seventh member?
          flatten append apply-append unlist-singleton str-split is-comment-line load-file has-value value-of range all any
-         string->S-expression drop assert-equal
+         string->S-expression drop assert-equal repeat string-repeat
          )
  (import (rnrs) ) ;  (rnrs io (6)) 
  
@@ -128,7 +128,17 @@
    (if (= n 0)
        null
        (append (range (- n 1)) (list n))))
+ 
+ (define (repeat x n)
+   (if (= n 0)
+       x
+       (cons x (repeat x (- n 1)))))
 
+  (define (string-repeat x n)
+   (if (= n 0)
+       x
+       (string-append x (string-repeat x (- n 1)))))
+ 
  ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  ; Assertions
  ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

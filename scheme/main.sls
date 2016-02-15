@@ -46,7 +46,7 @@
 (define MAX-FIND 1000)
 (define COMBINATOR-BASIS '(I S K B C))
 
-(define DISPLAY-INCREMENTAL #f) ; display as we're going?
+(define DISPLAY-INCREMENTAL #t) ; display as we're going?
 
 ;; Coutners
 (define GLOBAL-BACKTRACK-COUNT 0) ;; how many times have we called backtrack?
@@ -236,7 +236,8 @@
           ;; else we must search
           [ #t  (let* ((to-define (first (append undefined-rhs undefined-lhs))))
                   (stream-for-each (lambda (v) 
-                                     ;(displayn ">>" to-define "\t" v "\t" x (check-unique to-define v x))
+                                     (displayn (string-repeat "\t" (length x)) ; tab to show progress
+                                               "Trying " to-define "=" v "\t with defines " x )
                                      (call/cc (lambda (ret) (backtrack ret constraints (cons (list to-define v) x) length-bound)))
                                      null ;; must return a value or else scheme goes nuts
                                      )
