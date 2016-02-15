@@ -1,27 +1,29 @@
 # Add an example of an arbitrary graph
+# This requires encoding the lines since if we don't,
+# we can run into contradictions (assuming uniqueness)
+# like if alewife=(north park) and government=(north park)
 
 [unique braintree downtown park alewife riverside government northstation bowdoin state wonderland downtown foresthill oakgrove]
+[unique red-north green-north blue-north orange-north] # what it means to move north on each line
 
 # red line
-[constrain alewife  = (north park)]
-[constrain park     = (north downtown)]
+[constrain alewife  = (red-north park)]
+[constrain park     = (red-north downtown)]
+[constrain downtown = (red-north braintree)]
 
 # green line
-[constrain park         = (north riverside)]
-[constrain government   = (north park)]
-[constrain northstation = (north government)]
-
-# red line 
-[constrain downtown = (north braintree)]
+[constrain park         = (green-north riverside)]
+[constrain government   = (green-north park)]
+[constrain northstation = (green-north government)]
 
 # blue line
-[constrain government = (north bowdoin)]
-[constrain state      = (north government)]
-[constrain wonderland = (north state)]
+[constrain government = (blue-north bowdoin)]
+[constrain state      = (blue-north government)]
+[constrain wonderland = (blue-north state)]
 
 # orange
-[constrain downtown     = (north foresthill)]
-[constrain state        = (north downtown)]
-[constrain northstation = (north state)]
-[constrain oakgrove     = (north northstation)]
+[constrain downtown     = (orange-north foresthill)]
+[constrain state        = (orange-north downtown)]
+[constrain northstation = (orange-north state)]
+[constrain oakgrove     = (orange-north northstation)]
 
