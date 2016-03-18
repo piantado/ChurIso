@@ -12,7 +12,7 @@
  
  ;; prevent reductions from getting too long
  (define MAX-LENGTH 100)
- (define MAX-ITER   100) 
+ (define MAX-ITER   500) 
  (define (set-MAXes! a b)  ; required by testing module to allow bigger expressions
    (set! MAX-LENGTH a)
    (set! MAX-ITER b))
@@ -73,6 +73,14 @@
                                                     (drop 2 args)))]
                        
                        [ #t (cons op (map (lambda (li) (reduce/cc return n li))
+                                            
+                                            ;(let ((rli (call/cc (lambda (local-return) (reduce/cc local-return n li))))) ;; Must wrap in a *local* return here
+                                            ;             ;; wrap in allowance for non-halting in non-first arguments, to permit the Y combinator
+                                            ;             ;; Otherwise, if a non-evaled child doesn't halt, the whole thing is treated as not halting
+                                            ;             ;; but this type of semantics seems reasonable
+                                            ;             (if (equal? rli NON-HALT)
+                                            ;                 li
+                                            ;                 rli)))
                                           args))]
                        )))]
          ))

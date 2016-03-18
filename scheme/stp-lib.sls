@@ -2,7 +2,7 @@
  (stp-lib)
  (export displayn displaynerr null first second third fourth fifth sixth seventh member?
          flatten append apply-append unlist-singleton str-split is-comment-line load-file has-value value-of range all any
-         string->S-expression drop assert-equal repeat string-repeat
+         string->S-expression drop assert-equal repeat string-repeat mydisplay
          )
  (import (rnrs) ) ;  (rnrs io (6)) 
  

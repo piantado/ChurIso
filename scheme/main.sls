@@ -5,9 +5,10 @@
 ;; #####################################################################################
 ;; Simple backtracking search, that pushes constraints (rhs->lhs) when possible.
 ;; Steve Piantadosi -- spiantado@gmail.com -- January 2016
-;; vicare -O2 --source-path . main.sls -- ../domains/boolean.txt 1 1
+;; $ vicare -O2 --source-path . main.sls -- ../domains/boolean.txt 1 1
 ;;
-;; This outputs a zero on each line so we can sort via sort -g -z o.txt > osorted.txt
+;; This outputs a zero on each line so we can sort via 
+;; $ sort -g -z -k4 o.txt > osorted.txt
 ;; Note: The evaluator can't figure out (car %x %y) -> %x, only accepting -> (%x). 
 ;; #####################################################################################
 ;; #####################################################################################
@@ -44,9 +45,11 @@
 (define MAX-LENGTH 20) ; overall total max
 (define EOR #\nul) ; The end of record. Using #\nul will let you sort -z 
 (define MAX-FIND 1000)
-(define COMBINATOR-BASIS '(I S K B C))
+(define REQUIRE-REDUCED #t) ; must the combinators we associate with symbols be reduced?
+(define COMBINATOR-BASIS '(I S K)); B C))
 
-(define DISPLAY-INCREMENTAL (member "--incremental" ARGS)) ; display the outermost search to show progress?
+(define DISPLAY-INCREMENTAL (or (member "--incremental" ARGS)
+                                (member "--verbose" ARGS))) ; display the outermost search to show progress?
 (define SHOW-BACKTRACKING   (member "--verbose" ARGS)) ;; show all stages of the backtracking search?
 
 ;; Coutners
@@ -59,7 +62,8 @@
 
 (define all-input (load-file (open-input-file DATA-FILE)))
 
-(define constraints    (map cdr    (filter (lambda (x) (eqv? (first x) 'constrain)) all-input)))
+(define constraints  (map cdr    (filter (lambda (x) (eqv? (first x) 'constrain)) all-input))) ;normal constraints
+    
 (define show           (map second (filter (lambda (x) (eqv? (first x) 'show)) all-input)))
 (define limits         (map cdr    (filter (lambda (x) (eqv? (first x) 'limit)) all-input)))
 (define variables      (apply append  ; just a single list of all variables
@@ -98,21 +102,23 @@
 ; if they can be reduced, we will find them elsewhere in the search
 ; This means that when try something, we never will need to reduce it
 (define (irreducible x)
-  (equal? (rebracket (reduce x)) x))
+  (let ((rx (reduce x)))
+    (and (is-valid? rx)
+         (equal? (rebracket rx) x))))
 
 ; check if a reduced form is "valid"     
-(define (is-valid x)
+(define (is-valid? x)
   (and (not (equal? x NON-HALT))
        (not (equal? x '()))))
 
- ;; This lets us have a for loop with the list of things you loop over
- ;; up at the top. Note: This is for use with for-each, as it doesn't return the list
- (define-syntax for
-   (syntax-rules (in)
-     ((_ x in y body ...)
-      (for-each (lambda (x) body ...)
+;; This lets us have a for loop with the list of things you loop over
+;; up at the top. Note: This is for use with for-each, as it doesn't return the list
+(define-syntax for
+  (syntax-rules (in)
+    ((_ x in y body ...)
+     (for-each (lambda (x) body ...)
                y))))      
- 
+
 ;; convert s into a stream that has an offset of start
 ;; and skips skip
 ;'(import (srfi :41)) ; streams
@@ -219,8 +225,8 @@
           [(and (null? undefined-lhs) (null? undefined-rhs)) 
            (let ((reduced-lhs (reduce-under lhs x))
                  (reduced-rhs (reduce-under rhs x)))
-             (if (or (not (is-valid reduced-lhs)) ;; if there is a problem, return; else remove constraint and recurse
-                     (not (is-valid reduced-rhs))
+             (if (or (not (is-valid? reduced-lhs)) ;; if there is a problem, return; else remove constraint and recurse
+                     (not (is-valid? reduced-rhs))
                      (not (equal? check-equal (equal? reduced-lhs reduced-rhs))))
                  (return)
                  (backtrack return (cdr constraints) x length-bound)))]
@@ -230,6 +236,7 @@
           [(and (null? undefined-rhs) (not (list? lhs))) 
            (let ((reduced-rhs (reduce-under rhs x)))
              (if (and (check-unique lhs reduced-rhs x) ;; Enforce uniqueness constraint
+                      (is-valid? reduced-rhs)
                       (<= (length (flatten reduced-rhs)) (value-of lhs limits +inf.0))) ;; enforce depth bound
                  (backtrack return (cdr constraints) (cons (list lhs reduced-rhs) x) length-bound)
                  (return)))] ;;otherwise add and recurse
@@ -239,7 +246,7 @@
                   (stream-for-each (lambda (v) 
                                      (if SHOW-BACKTRACKING
                                          (displayn (string-repeat "\t" (length x)) ; tab to show progress
-                                               "Trying " to-define "=" v "\t with defines " x ))
+                                                   "Trying " to-define "=" v "\t with defines " x ))
                                      (call/cc (lambda (ret) (backtrack ret constraints (cons (list to-define v) x) length-bound)))
                                      null ;; must return a value or else scheme goes nuts
                                      )
@@ -247,7 +254,8 @@
                                                                    (<= (length (flatten r)) (value-of to-define limits +inf.0))))
                                                   ; holy crap this order matters a lot to uniquenss -- must be reduced before we
                                                   ; check uniqueness
-                                                  (stream-filter irreducible (enumerate-all length-bound COMBINATOR-BASIS)))))]
+                                                  (stream-filter (if REQUIRE-REDUCED irreducible (lambda (x) #t))
+                                                                 (enumerate-all length-bound COMBINATOR-BASIS)))))]
           ))))
 
 
@@ -271,7 +279,7 @@
                      
                      (if DISPLAY-INCREMENTAL
                          (begin
-                           (displayn "# Trying " v "\t" (length (flatten v)) "\t found\t" found-count)
+                           (displayn "# Trying " to-define " = " v "\t" (length (flatten v)) "\t found\t" found-count)
                            (flush-output-port (current-output-port))))
                      
                      (call/cc (lambda (exit) 
@@ -281,11 +289,11 @@
                                            (length (flatten v)) ; nothing can be longer than the first define in order to ensure efficient search
                                            )))))
                  
-                 (stream-filter irreducible 
+                 (stream-filter (if REQUIRE-REDUCED irreducible (lambda (x) #t))
                                 (stream-skip PARALLEL-SKIP
                                              (stream-drop PARALLEL-START  ;; handle parallel processing
                                                           (enumerate-all MAX-LENGTH COMBINATOR-BASIS)))))
-                                
+
 (displaynerr "# Backtrack count: " GLOBAL-BACKTRACK-COUNT)
 (displaynerr "# Found count: " found-count " for " (cdr ARGS))
 
