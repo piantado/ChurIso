@@ -234,7 +234,7 @@
           ;; we can push a constraint TODO: MAKE THIS WORK IN EITHER ORDER
           ;; NOTE: WE do *not* enforce the length bound here
           [(and (null? undefined-rhs) (not (list? lhs))) 
-           (let ((reduced-rhs (reduce-under rhs x)))
+           (let ((reduced-rhs (rebracket (reduce-under rhs x))))
              (if (and (check-unique lhs reduced-rhs x) ;; Enforce uniqueness constraint
                       (is-valid? reduced-rhs)
                       (<= (length (flatten reduced-rhs)) (value-of lhs limits +inf.0))) ;; enforce depth bound
