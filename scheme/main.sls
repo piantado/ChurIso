@@ -85,18 +85,17 @@
   (member a variables))
 
 ;; like map, but recurses down lists of lists, applying l
-(define (tree-substitute f l)
+(define (sub-f f l)
   (cond [(null? l)  null]
-        [(list? l)  (map (lambda (li) (tree-substitute f li)) l)]
+        [(list? l)  (map (lambda (li) (sub-f f li)) l)]
         [ #t        (f l) ]))
 
-(define (reduce-under t x)
-  (let ((mapped (tree-substitute (lambda (a) (cond [(is-variable? a) a] ;; variables are just themselves
-                                                   [(assoc a x) (second (assoc a x))] ;; look up if its in x
-                                                   [ #t a ] ;; otherwise we assume a "quoted" variable. TODO: THIS SHOULD CHANGE
-                                                   ))
-                                 t)))
-    (reduce mapped)))
+(define (substitute t x)
+  (sub-f (lambda (a) (cond [(is-variable? a) a] ;; variables are just themselves
+                                     [(assoc a x) (second (assoc a x))] ;; look up if its in x
+                                     [ #t a ] ;; otherwise we assume a "quoted" variable. TODO: THIS SHOULD CHANGE
+                                     ))
+                   t))
 
 ; we only have to look at combinators that cannot be reduced, since
 ; if they can be reduced, we will find them elsewhere in the search
@@ -146,6 +145,39 @@
   (check-unique-inner tok val uniques x))
 
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; Checking equality under reduction
+; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+(define (normal-form-equal? lhs rhs x)
+  (let ((reduced-lhs (reduce (substitute lhs x)))
+        (reduced-rhs (reduce (substitute rhs x))))
+    (and (is-valid? reduced-lhs) ;; if there is a problem, return; else remove constraint and recurse
+         (is-valid? reduced-rhs)
+         (equal? (rebracket reduced-rhs) (rebracket reduced-lhs)))))
+
+(define (normal-form-unequal? lhs rhs x)
+  (not (normal-form-equal? lhs rhs x)))
+
+; for use in non-halting expressions with no normal form, do the traces ever overlap?
+(define (trace-equal? lhs rhs x)
+  (let (( lhs-hash (reduce-with-hash (substitute lhs x)))
+        ( rhs-hash (reduce-with-hash (substitute rhs x))))
+    
+    ;(displayn "==========================")
+    ;(displayn x)
+    (for x in (vector->list (hashtable-keys lhs-hash))
+      (displayn x))
+    ;(displayn "\n\n\n")
+    ;(displayn (vector->list (hashtable-keys rhs-hash)))
+    
+    (any (lambda (k) (hashtable-contains? rhs-hash k))
+         (vector->list (hashtable-keys lhs-hash)))))    
+
+(displayn "--->" (trace-equal? '((S (K (S I I)) (S (S (K S) K) (K (S I I)))) f)
+                               '(f ((S (K (S I I)) (S (S (K S) K) (K (S I I)))) f)) 
+                               '()))
+(exit)
+; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; How to display a winner
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -159,7 +191,7 @@
   (define running-time 
     (let ((start-count (get-reduction-count)))
       (for ci in constraints
-        (reduce-under ci x))
+        (reduce (substitute ci x)))
       (- (get-reduction-count) start-count)))
   
   ; Display the total length and running time
@@ -171,7 +203,7 @@
   
   ; print the show: what you compute, the outcome, and a list of things its equal to
   (for hi in show
-    (let ((rho (reduce-under hi x)))
+    (let ((rho (reduce (substitute hi x))))
       (displayn "showing\t" hi " -> " rho " which equals " (map first (filter (lambda (a) (equal? (second a) rho)) x)) )))
   
   ; and another format
@@ -205,7 +237,7 @@
       (display-winner x) ;; good news!
       (let* ((c           (car constraints))
              (lhs         (first c))
-             (check-equal (equal? (second c) '=)) ;; does this constraint require equal or not equal?
+             (constraint-type (second c))
              (rhs         (third c))
              (in-x?       (lambda (a) (assoc a x)))
              (definable   (lambda (a) (and (not (in-x? a)) ; ;what can we define? Must not be defined (not in x) and not be a variable
@@ -222,19 +254,18 @@
         (cond 
           
           ; if we have defined everything
-          [(and (null? undefined-lhs) (null? undefined-rhs)) 
-           (let ((reduced-lhs (reduce-under lhs x))
-                 (reduced-rhs (reduce-under rhs x)))
-             (if (or (not (is-valid? reduced-lhs)) ;; if there is a problem, return; else remove constraint and recurse
-                     (not (is-valid? reduced-rhs))
-                     (not (equal? check-equal (equal? reduced-lhs reduced-rhs))))
-                 (return)
-                 (backtrack return (cdr constraints) x length-bound)))]
-          
+          [(and (null? undefined-lhs) (null? undefined-rhs))
+           (if ((cond [(equal? constraint-type '=b=) trace-equal?]
+                      [(equal? constraint-type '=)   normal-form-equal?]
+                      [(equal? constraint-type '!=)  normal-form-unequal?])
+                lhs rhs x)     
+               (backtrack return (cdr constraints) x length-bound)
+               (return))]
+
           ;; we can push a constraint TODO: MAKE THIS WORK IN EITHER ORDER
           ;; NOTE: WE do *not* enforce the length bound here
           [(and (null? undefined-rhs) (not (list? lhs))) 
-           (let ((reduced-rhs (rebracket (reduce-under rhs x))))
+           (let ((reduced-rhs (rebracket (reduce (substitute rhs x)))))
              (if (and (check-unique lhs reduced-rhs x) ;; Enforce uniqueness constraint
                       (is-valid? reduced-rhs)
                       (<= (length (flatten reduced-rhs)) (value-of lhs limits +inf.0))) ;; enforce depth bound
