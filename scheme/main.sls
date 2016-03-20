@@ -165,18 +165,15 @@
     
     ;(displayn "==========================")
     ;(displayn x)
-    (for x in (vector->list (hashtable-keys lhs-hash))
-      (displayn x))
+    ;(for x in (vector->list (hashtable-keys lhs-hash))
+    ;  (displayn x))
     ;(displayn "\n\n\n")
     ;(displayn (vector->list (hashtable-keys rhs-hash)))
     
     (any (lambda (k) (hashtable-contains? rhs-hash k))
          (vector->list (hashtable-keys lhs-hash)))))    
 
-(displayn "--->" (trace-equal? '((S (K (S I I)) (S (S (K S) K) (K (S I I)))) f)
-                               '(f ((S (K (S I I)) (S (S (K S) K) (K (S I I)))) f)) 
-                               '()))
-(exit)
+
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; How to display a winner
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
