@@ -158,22 +158,6 @@
 (define (normal-form-unequal? lhs rhs x)
   (not (normal-form-equal? lhs rhs x)))
 
-; for use in non-halting expressions with no normal form, do the traces ever overlap?
-(define (trace-equal? lhs rhs x)
-  (let (( lhs-hash (reduce-with-hash (substitute lhs x)))
-        ( rhs-hash (reduce-with-hash (substitute rhs x))))
-    
-    ;(displayn "==========================")
-    ;(displayn x)
-    ;(for x in (vector->list (hashtable-keys lhs-hash))
-    ;  (displayn x))
-    ;(displayn "\n\n\n")
-    ;(displayn (vector->list (hashtable-keys rhs-hash)))
-    
-    (any (lambda (k) (hashtable-contains? rhs-hash k))
-         (vector->list (hashtable-keys lhs-hash)))))    
-
-
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; How to display a winner
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -252,7 +236,7 @@
           
           ; if we have defined everything
           [(and (null? undefined-lhs) (null? undefined-rhs))
-           (if ((cond [(equal? constraint-type '=b=) trace-equal?]
+           (if ((cond ;[(equal? constraint-type '=b=) trace-equal?] ; Not implemented
                       [(equal? constraint-type '=)   normal-form-equal?]
                       [(equal? constraint-type '!=)  normal-form-unequal?])
                 lhs rhs x)     

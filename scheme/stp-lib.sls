@@ -2,7 +2,7 @@
  (stp-lib)
  (export displayn displaynerr null first second third fourth fifth sixth seventh member?
          flatten append apply-append unlist-singleton str-split is-comment-line load-file has-value value-of range all any
-         string->S-expression drop assert-equal repeat string-repeat mydisplay 
+         string->S-expression drop assert-equal repeat string-repeat mydisplay last
          )
  (import (rnrs) ) ;  (rnrs io (6)) 
  
@@ -44,7 +44,9 @@
  (define (seventh x)  (cadddr (cdddr x)))
  
  (define member? member)
- 
+
+  
+  
  
  (define (drop n x)
    (if (<= n 0)
@@ -98,6 +100,11 @@
    (if (not (list? x))
        1
        (apply + (map length* x))))
+ 
+ (define (last l)
+   (if (null? (cdr l)) 
+       (car l)
+       (last (cdr l))))
  
  (define (depth x)
    (if (list? x)

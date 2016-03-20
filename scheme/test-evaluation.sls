@@ -26,9 +26,8 @@
 
 (assert-rebracket-equal (reduce '(S (K (S I)) K x y)) '(y x))
 
-(assert-equal #t (trace-equal? '(S I I (S I I)) '(S I I (S I I)) '()))
-
-(assert-equal #t (trace-equal? '(I S I I (S I I)) '(S I I (S I I)) '()))
+;(assert-equal #t (trace-equal? '(S I I (S I I)) '(S I I (S I I)) '()))
+;(assert-equal #t (trace-equal? '(I S I I (S I I)) '(S I I (S I I)) '()))
 
 ; For pursuing the Z combinator
 ;[f] (([x] (f ([v] (x x) v))) ([x] (f ([v] (x x) v))))
