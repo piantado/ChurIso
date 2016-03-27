@@ -30,10 +30,9 @@
 (define DATA-FILE (second ARGS)) ;"data/boolean-quantifier.txt")
 
 ;; These two allow us to run searches in parallel. They control the start
-;; and the skip for the first defined value. 0,1 will allow it to run normally
-;; in a single thread. 
-(define PARALLEL-START (string->number (third ARGS))) ;; start from 0?
-(define PARALLEL-SKIP  (string->number (fourth ARGS))) ;; skip 1
+;; and the skip for the first defined value. 0,0 will allow it to run normally in a single thread
+(define PARALLEL-START (string->number (third ARGS))) 
+(define PARALLEL-SKIP  (string->number (fourth ARGS))) 
 (displayn "# Running with " PARALLEL-START " " PARALLEL-SKIP)
 
 (define MAX-LENGTH 20) ; overall total max
@@ -133,7 +132,7 @@
   (if (stream-null? s)
       stream-null
       (stream-cons (stream-car s)  
-                   (stream-skip skip (stream-drop skip s))))) 
+                   (stream-skip skip (stream-drop (+ skip 1) s))))) 
 
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; Manage uniqueness
