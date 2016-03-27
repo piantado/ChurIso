@@ -1,6 +1,6 @@
 (library 
  (evaluation)
- (export get-reduction-count reduce rebracket NON-HALT set-MAXes!)
+ (export get-reduction-count reduce reduce-partial rebracket NON-HALT set-MAXes!)
  (import (rnrs) (vicare) (stp-lib) (rnrs hashtables (6)) )
  
  ;; #####################################################################################
@@ -12,7 +12,7 @@
  
  ;; prevent reductions from getting too long
  (define MAX-LENGTH 100)
- (define MAX-ITER   500) 
+ (define MAX-ITER   200) 
  (define (set-MAXes! a b)  ; required by testing module to allow bigger expressions
    (set! MAX-LENGTH a)
    (set! MAX-ITER b))
@@ -32,14 +32,22 @@
    (call/cc (lambda (return)
               (reduce/cc return MAX-ITER lst))))
  
- 
+ ; returns a partial list when we 
+ (define (reduce-partial lst)
+   (reduce/cc '() MAX-ITER lst))
  
  ;; the kind of reduce you call within call/cc
  (define (reduce/cc return maxn lst)
+   ; if return is a null? here, then on recursing too deep we will return NON-HALT 
+   ; in the corresponding sub-expression. Otherwise, *only* NON-HALT is returned
+   
+   ;(displayn lst)
+   
    (set! REDUCTION-COUNTER (+ REDUCTION-COUNTER 1))
    (cond [(null? lst) '()]
          [(not (list? lst)) lst]
-         [(or (<= maxn 0) (> (length lst) MAX-LENGTH)) (return NON-HALT)]
+         [(or (<= maxn 0) (> (length lst) MAX-LENGTH))
+          (if (null? return) lst (return NON-HALT))]
          [ #t (let* ((op (car lst))        ;; what is the first?
                      (args (cdr lst))      ;; what are the args
                      (largs (length args)) ;; how many args
@@ -62,19 +70,19 @@
                         (reduce/cc return n (append (list (first args) (list (second args) (third args)))
                                                     (drop 3 args)))]
                        
-                       [(and (eq? op 'T) (>= largs 2)) ;; (T x y) = (y x)
-                        (reduce/cc return n (append (list (second args) (first args))
-                                                    (drop 2 args)))]
-                       [(and (eq? op 'Y) (>= largs 1)) ;; (Y x) =(x (Y x))
-                        (reduce/cc return n (append (list (first args) (list 'Y (first args)))
-                                                    (drop 1 args)))]
-                       [(and (eq? op 'Z) (>= largs 2)) ;; (Z g v) = (g (Z g) v)
-                        (reduce/cc return n (append (list (first args) (list 'Z (first args)) (second args))
-                                                    (drop 2 args)))]
-                       [(and (eq? op 'W) (>= largs 2)) ;; (W x y) = (x y y)
-                        (reduce/cc return n (append (list (first args) (second args) (second args))
-                                                    (drop 2 args)))]
-                       
+;                       [(and (eq? op 'T) (>= largs 2)) ;; (T x y) = (y x)
+;                        (reduce/cc return n (append (list (second args) (first args))
+;                                                    (drop 2 args)))]
+;                       [(and (eq? op 'Y) (>= largs 1)) ;; (Y x) =(x (Y x))
+;                        (reduce/cc return n (append (list (first args) (list 'Y (first args)))
+;                                                    (drop 1 args)))]
+;                       [(and (eq? op 'Z) (>= largs 2)) ;; (Z g v) = (g (Z g) v)
+;                        (reduce/cc return n (append (list (first args) (list 'Z (first args)) (second args))
+;                                                    (drop 2 args)))]
+;                       [(and (eq? op 'W) (>= largs 2)) ;; (W x y) = (x y y)
+;                        (reduce/cc return n (append (list (first args) (second args) (second args))
+;                                                    (drop 2 args)))]
+;                       
                        [ #t (cons op (map (lambda (li) (reduce/cc return n li))
                                           args))]
                        )))]

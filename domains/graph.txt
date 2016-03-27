@@ -36,10 +36,10 @@
 #[constrain northstation = (orange-north state)]
 [constrain government = (e blue-north bowdoin)]
 
-#[constrain wonderland = (e blue-north state)]
-#[constrain park         = (green-north riverside)]
+[constrain wonderland = (e blue-north state)]
+[constrain park         = (green-north riverside)]
 
-#[constrain downtown     = (orange-north foresthill)]
-#[constrain oakgrove     = (orange-north northstation)]
+[constrain downtown     = (orange-north foresthill)]
+[constrain oakgrove     = (orange-north northstation)]
 
 

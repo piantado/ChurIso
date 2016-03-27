@@ -13,11 +13,6 @@
 ;; #####################################################################################
 ;; #####################################################################################
 
-;; TO DO LIST:
-;; Domain to add: c-command!!
-;; or a recursive function that doesn't use variables for the Y combinator
-; fix the parens and a^nb^n forma languages etc
-
 (import (rnrs) 
         (combinators) (stp-lib) (evaluation) 
         (srfi :41); streams
@@ -45,8 +40,12 @@
 (define MAX-LENGTH 20) ; overall total max
 (define EOR #\nul) ; The end of record. Using #\nul will let you sort -z 
 (define MAX-FIND 1000)
-(define REQUIRE-REDUCED #t) ; must the combinators we associate with symbols be reduced?
-(define COMBINATOR-BASIS '(I S K)); B C))
+(define PREFIX-DEPTH 8) ; when we say that prefixes must be equal, how deep do they have to be to?
+(define FILTER 'compressed) ; normal (must be normal form), compressed (non-normal forms are okay as long as they are shorter than the normal form), or none (all combinators)
+
+
+
+(define COMBINATOR-BASIS `(S K)) ; ,Isk ,Bsk ,Csk)); B C))
 
 (define DISPLAY-INCREMENTAL (or (member "--incremental" ARGS)
                                 (member "--verbose" ARGS))) ; display the outermost search to show progress?
@@ -100,10 +99,17 @@
 ; we only have to look at combinators that cannot be reduced, since
 ; if they can be reduced, we will find them elsewhere in the search
 ; This means that when try something, we never will need to reduce it
-(define (irreducible x)
+(define (is-normal-form? x)
   (let ((rx (reduce x)))
     (and (is-valid? rx)
          (equal? (rebracket rx) x))))
+
+(define (is-normal-form-or-shorter? x)
+  ; True if its a normal form OR its normal form is longer then its current form
+  ; This is useful for excluding 
+  (let ((rx (reduce x)))
+    (and (is-valid? rx)
+         (<= (length* rx) (length* x)))))
 
 ; check if a reduced form is "valid"     
 (define (is-valid? x)
@@ -157,6 +163,33 @@
 
 (define (normal-form-unequal? lhs rhs x)
   (not (normal-form-equal? lhs rhs x)))
+
+; check if the partial evaluations are equal
+(define (partial-equal? lhs rhs x)
+  (>= (prefix-check (reduce-partial (substitute rhs x))
+                    (reduce-partial (substitute lhs x)))
+      PREFIX-DEPTH))
+
+
+(define (prefix-check x y)
+  ; how many symbols do I have to look at to find they're not equal?
+  ; (NOTE: I check the lengths of each list, so I may not need to recurse into it. 
+  (if (or (not (eqv? (list? x) (list? y)))
+          (and (list? x) (not (= (length x) (length y)))))
+      0
+      (if (list? x)
+          (if (null? x) ; and must have null y
+              +inf.0
+              (+ 1 (min (prefix-check (car x) (car y))
+                        (prefix-check (cdr x) (cdr y)))))
+          (if (eqv? x y) +inf.0 0))))
+;(prefix-check '(a a (c d) b (a b (c d))) '(a a (d d) b (a b (c d e))))
+
+;(displayn (partial-equal? '(Y f)
+;                          '(f (Y f))
+;                          ;'((Y ((S ((S ((S ((S ((S ((S ((S ((S ((S ((S S) S)) S)) S)) S)) S)))))))))))))))
+;                          '((Y (S (K (S I I)) (S (S (K S) K) (K (S I I))))))))
+
 
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; How to display a winner
@@ -236,7 +269,7 @@
           
           ; if we have defined everything
           [(and (null? undefined-lhs) (null? undefined-rhs))
-           (if ((cond ;[(equal? constraint-type '=b=) trace-equal?] ; Not implemented
+           (if ((cond [(equal? constraint-type '=b=) partial-equal?] 
                       [(equal? constraint-type '=)   normal-form-equal?]
                       [(equal? constraint-type '!=)  normal-form-unequal?])
                 lhs rhs x)     
@@ -264,9 +297,11 @@
                                      )
                                    (stream-filter (lambda (r) (and (check-unique to-define r x)
                                                                    (<= (length (flatten r)) (value-of to-define limits +inf.0))))
-                                                  ; holy crap this order matters a lot to uniquenss -- must be reduced before we
+                                                  ; This order matters a lot to uniqueness -- must be reduced before we
                                                   ; check uniqueness
-                                                  (stream-filter (if REQUIRE-REDUCED irreducible (lambda (x) #t))
+                                                  (stream-filter (cond ((eqv? FILTER 'normal) is-normal-form?)
+                                                                       ((eqv? FILTER 'compressed) is-normal-form-or-shorter?)
+                                                                       ((eqv? FILTER 'none)  (lambda args #t)))
                                                                  (enumerate-all length-bound COMBINATOR-BASIS)))))]
           ))))
 
@@ -300,8 +335,9 @@
                                            (cons (list to-define v) defines) 
                                            (length (flatten v)) ; nothing can be longer than the first define in order to ensure efficient search
                                            )))))
-                 
-                 (stream-filter (if REQUIRE-REDUCED irreducible (lambda (x) #t))
+                 (stream-filter (cond ((eqv? FILTER 'normal) is-normal-form?)
+                                      ((eqv? FILTER 'compressed) is-normal-form-or-shorter?)
+                                      ((eqv? FILTER 'none)  (lambda args #t)))
                                 (stream-skip PARALLEL-SKIP
                                              (stream-drop PARALLEL-START  ;; handle parallel processing
                                                           (enumerate-all MAX-LENGTH COMBINATOR-BASIS)))))
