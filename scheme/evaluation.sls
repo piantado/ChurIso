@@ -12,7 +12,7 @@
  
  ;; prevent reductions from getting too long
  (define MAX-LENGTH 100)
- (define MAX-ITER   100) 
+ (define MAX-ITER   300) 
  (define (set-MAXes! a b)  ; required by testing module to allow bigger expressions
    (set! MAX-LENGTH a)
    (set! MAX-ITER b))

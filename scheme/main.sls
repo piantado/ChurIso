@@ -9,6 +9,7 @@
 ;;
 ;; This outputs a zero on each line so we can sort via 
 ;; $ sort -g -z -k4 o.txt > osorted.txt
+;;
 ;; #####################################################################################
 ;; #####################################################################################
 
@@ -38,8 +39,12 @@
 (define MAX-LENGTH 20) ; overall total max
 (define EOR #\nul) ; The end of record. Using #\nul will let you sort -z 
 (define MAX-FIND 1000)
-(define PREFIX-DEPTH 8) ; when we say that prefixes must be equal, how deep do they have to be to?
-(define FILTER 'compressed) ; normal (must be normal form), compressed (non-normal forms are okay as long as they are shorter than the normal form), or none (all combinators)
+(define PREFIX-DEPTH 10) ; when we say that prefixes must be equal, how deep do they have to be to?
+(define COMBINATOR-FILTER 'compressed) ; normal (must be normal form), compressed (non-normal forms are okay as long as they are shorter than the normal form), or none (all combinators)
+
+; How do we define uniqueness when we enforce it? 
+; Other options include trace-approx-equal? and equal?
+(define (are-combinators-equal? lhs rhs)  (normal-form-equal? lhs rhs))
 
 (define COMBINATOR-BASIS `(S K)) ; ,Isk ,Bsk ,Csk)); B C))
 
@@ -74,7 +79,7 @@
 (displaynerr "# MAX-LENGTH " MAX-LENGTH)
 (displaynerr "# MAX-FIND " MAX-FIND)
 (displaynerr "# PREFIX-DEPTH " PREFIX-DEPTH)
-(displaynerr "# FILTER " FILTER)
+(displaynerr "# COMBINATOR-FILTER " COMBINATOR-FILTER)
 (displaynerr "# COMBINATOR-BASIS " COMBINATOR-BASIS)
 
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -117,6 +122,10 @@
   (and (not (equal? x NON-HALT))
        (not (equal? x '()))))
 
+; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; Some helpful control flow, streams
+; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 ;; This lets us have a for loop with the list of things you loop over
 ;; up at the top. Note: This is for use with for-each, as it doesn't return the list
 (define-syntax for
@@ -145,7 +154,7 @@
       #t ;; it's good!
       (let ((l (car uniques)))
         (and (if (member? tok l)
-                 (all (lambda (k) (not (equal? (value-of k x 'NA-VALUE) val))) l) ;; look up each element of l and check that it's value in x is not val
+                 (all (lambda (k) (not (are-combinators-equal? (value-of k x 'NA-VALUE) val ))) l) ;; look up each element of l and check that it's value in x is not val
                  #t)
              (check-unique-inner tok val (cdr uniques) x)))))
 (define (check-unique tok val x)
@@ -155,20 +164,17 @@
 ; Checking equality under reduction
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-(define (normal-form-equal? lhs rhs x)
-  (let ((reduced-lhs (reduce (substitute lhs x)))
-        (reduced-rhs (reduce (substitute rhs x))))
+(define (normal-form-equal? lhs rhs)
+  (let ((reduced-lhs (reduce lhs))
+        (reduced-rhs (reduce rhs)))
     (and (is-valid? reduced-lhs) ;; if there is a problem, return; else remove constraint and recurse
          (is-valid? reduced-rhs)
          (equal? (rebracket reduced-rhs) (rebracket reduced-lhs)))))
 
-(define (normal-form-unequal? lhs rhs x)
-  (not (normal-form-equal? lhs rhs x)))
-
 ; check if the partial evaluations are equal
-(define (trace-approx-equal? lhs rhs x)
-  (>= (prefix-check (reduce-partial (substitute rhs x))
-                    (reduce-partial (substitute lhs x)))
+(define (trace-approx-equal? lhs rhs)
+  (>= (prefix-check (reduce-partial lhs)
+                    (reduce-partial rhs))
       PREFIX-DEPTH))
 
 
@@ -219,11 +225,15 @@
   ; print the show: what you compute, the outcome, and a list of things its equal to
   (for hi in show
     (let ((rho (reduce (substitute hi x))))
-      (displayn "showing\t" hi " -> " rho " which equals " (map first (filter (lambda (a) (equal? (second a) rho)) x)) )))
+      (displayn "showing\t" hi " -> " rho 
+                " which equals " (map first (filter (lambda (a) (are-combinators-equal? (second a) rho )) x)) )))
   
   ; and another format
-  (displayn "# " x )
+  ;(displayn "# " x )
   (displayn "---------------------------\n" EOR) ; end in #\0 so we can sort -z by multiple lines
+  
+  
+  (flush-output-port (current-output-port))
   
   ; kill everything if we've found too many
   (if (> found-count MAX-FIND)
@@ -231,6 +241,8 @@
         (displayn "# Terminating from exceeding MAX-FIND")
         (exit 0))  
       (set! found-count (+ found-count 1)))
+  
+  
   )
 
 
@@ -261,19 +273,19 @@
              (undefined-rhs (filter definable (flatten rhs)))
              )
         
-        ;(displayn "c = " c)
-        ;(displayn "x = " x)
-        ;(displayn "undefined-rhs = " undefined-rhs)
-        ;(displayn "undefined-lhs = " undefined-lhs)
+        ;(displayn "\tc = " c)
+        ;(displayn "\tx = " x)
+        ;(displayn "\tundefined-rhs = " undefined-rhs)
+        ;(displayn "\tundefined-lhs = " undefined-lhs)
         
         (cond 
           
           ; if we have defined everything
           [(and (null? undefined-lhs) (null? undefined-rhs))
-           (if ((cond [(equal? constraint-type '=trace=) trace-approx-equal?] 
-                      [(equal? constraint-type '=)   normal-form-equal?]
-                      [(equal? constraint-type '!=)  normal-form-unequal?])
-                lhs rhs x)     
+           (if ((cond [(equal? constraint-type '=trace=) (lambda (lhs rhs)      (trace-approx-equal? (substitute lhs x) (substitute rhs x))) ] 
+                      [(equal? constraint-type '=)       (lambda (lhs rhs)      (normal-form-equal?  (substitute lhs x) (substitute rhs x))) ]
+                      [(equal? constraint-type '!=)      (lambda (lhs rhs) (not (normal-form-equal?  (substitute lhs x) (substitute rhs x))))])
+                lhs rhs)     
                (backtrack return (cdr constraints) x length-bound)
                (return))]
           
@@ -300,9 +312,9 @@
                                                                    (<= (length (flatten r)) (value-of to-define limits +inf.0))))
                                                   ; This order matters a lot to uniqueness -- must be reduced before we
                                                   ; check uniqueness
-                                                  (stream-filter (cond ((eqv? FILTER 'normal) is-normal-form?)
-                                                                       ((eqv? FILTER 'compressed) is-normal-form-or-shorter?)
-                                                                       ((eqv? FILTER 'none)  (lambda args #t)))
+                                                  (stream-filter (cond ((eqv? COMBINATOR-FILTER 'normal) is-normal-form?)
+                                                                       ((eqv? COMBINATOR-FILTER 'compressed) is-normal-form-or-shorter?)
+                                                                       ((eqv? COMBINATOR-FILTER 'none)  (lambda args #t)))
                                                                  (enumerate-all length-bound COMBINATOR-BASIS)))))]
           ))))
 
@@ -336,9 +348,10 @@
                                            (cons (list to-define v) defines) 
                                            (length (flatten v)) ; nothing can be longer than the first define in order to ensure efficient search
                                            )))))
-                 (stream-filter (cond ((eqv? FILTER 'normal) is-normal-form?)
-                                      ((eqv? FILTER 'compressed) is-normal-form-or-shorter?)
-                                      ((eqv? FILTER 'none)  (lambda args #t)))
+                 
+                 (stream-filter (cond ((eqv? COMBINATOR-FILTER 'normal) is-normal-form?)
+                                      ((eqv? COMBINATOR-FILTER 'compressed) is-normal-form-or-shorter?)
+                                      ((eqv? COMBINATOR-FILTER 'none)  (lambda args #t)))
                                 (stream-skip PARALLEL-SKIP
                                              (stream-drop PARALLEL-START  ;; handle parallel processing
                                                           (enumerate-all MAX-LENGTH COMBINATOR-BASIS)))))
