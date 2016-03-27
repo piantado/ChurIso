@@ -43,8 +43,6 @@
 (define PREFIX-DEPTH 8) ; when we say that prefixes must be equal, how deep do they have to be to?
 (define FILTER 'compressed) ; normal (must be normal form), compressed (non-normal forms are okay as long as they are shorter than the normal form), or none (all combinators)
 
-
-
 (define COMBINATOR-BASIS `(S K)) ; ,Isk ,Bsk ,Csk)); B C))
 
 (define DISPLAY-INCREMENTAL (or (member "--incremental" ARGS)
@@ -62,7 +60,7 @@
 (define all-input (load-file (open-input-file DATA-FILE)))
 
 (define constraints  (map cdr    (filter (lambda (x) (eqv? (first x) 'constrain)) all-input))) ;normal constraints
-    
+
 (define show           (map second (filter (lambda (x) (eqv? (first x) 'show)) all-input)))
 (define limits         (map cdr    (filter (lambda (x) (eqv? (first x) 'limit)) all-input)))
 (define variables      (apply append  ; just a single list of all variables
@@ -91,10 +89,10 @@
 
 (define (substitute t x)
   (sub-f (lambda (a) (cond [(is-variable? a) a] ;; variables are just themselves
-                                     [(assoc a x) (second (assoc a x))] ;; look up if its in x
-                                     [ #t a ] ;; otherwise we assume a "quoted" variable. TODO: THIS SHOULD CHANGE
-                                     ))
-                   t))
+                           [(assoc a x) (second (assoc a x))] ;; look up if its in x
+                           [ #t a ] ;; otherwise we assume a "quoted" variable. TODO: THIS SHOULD CHANGE
+                           ))
+         t))
 
 ; we only have to look at combinators that cannot be reduced, since
 ; if they can be reduced, we will find them elsewhere in the search
@@ -275,7 +273,7 @@
                 lhs rhs x)     
                (backtrack return (cdr constraints) x length-bound)
                (return))]
-
+          
           ;; we can push a constraint TODO: MAKE THIS WORK IN EITHER ORDER
           ;; NOTE: WE do *not* enforce the length bound here
           [(and (null? undefined-rhs) (not (list? lhs))) 
