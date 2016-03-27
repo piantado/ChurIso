@@ -9,7 +9,6 @@
 ;;
 ;; This outputs a zero on each line so we can sort via 
 ;; $ sort -g -z -k4 o.txt > osorted.txt
-;; Note: The evaluator can't figure out (car %x %y) -> %x, only accepting -> (%x). 
 ;; #####################################################################################
 ;; #####################################################################################
 
@@ -49,7 +48,7 @@
                                 (member "--verbose" ARGS))) ; display the outermost search to show progress?
 (define SHOW-BACKTRACKING   (member "--verbose" ARGS)) ;; show all stages of the backtracking search?
 
-;; Coutners
+;; Counters
 (define GLOBAL-BACKTRACK-COUNT 0) ;; how many times have we called backtrack?
 (define found-count 0) ;; how mamny did we find?
 
@@ -73,6 +72,11 @@
 (displaynerr "# Uniques " uniques)
 (displaynerr "# Variables: " variables)
 (displaynerr "# Defines " defines)
+(displaynerr "# MAX-LENGTH " MAX-LENGTH)
+(displaynerr "# MAX-FIND " MAX-FIND)
+(displaynerr "# PREFIX-DEPTH " PREFIX-DEPTH)
+(displaynerr "# FILTER " FILTER)
+(displaynerr "# COMBINATOR-BASIS " COMBINATOR-BASIS)
 
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; Helper functions
@@ -163,7 +167,7 @@
   (not (normal-form-equal? lhs rhs x)))
 
 ; check if the partial evaluations are equal
-(define (partial-equal? lhs rhs x)
+(define (trace-approx-equal? lhs rhs x)
   (>= (prefix-check (reduce-partial (substitute rhs x))
                     (reduce-partial (substitute lhs x)))
       PREFIX-DEPTH))
@@ -183,7 +187,7 @@
           (if (eqv? x y) +inf.0 0))))
 ;(prefix-check '(a a (c d) b (a b (c d))) '(a a (d d) b (a b (c d e))))
 
-;(displayn (partial-equal? '(Y f)
+;(displayn (trace-approx-equal? '(Y f)
 ;                          '(f (Y f))
 ;                          ;'((Y ((S ((S ((S ((S ((S ((S ((S ((S ((S ((S S) S)) S)) S)) S)) S)))))))))))))))
 ;                          '((Y (S (K (S I I)) (S (S (K S) K) (K (S I I))))))))
@@ -267,7 +271,7 @@
           
           ; if we have defined everything
           [(and (null? undefined-lhs) (null? undefined-rhs))
-           (if ((cond [(equal? constraint-type '=b=) partial-equal?] 
+           (if ((cond [(equal? constraint-type '=trace=) trace-approx-equal?] 
                       [(equal? constraint-type '=)   normal-form-equal?]
                       [(equal? constraint-type '!=)  normal-form-unequal?])
                 lhs rhs x)     
