@@ -46,7 +46,7 @@
    (set! REDUCTION-COUNTER (+ REDUCTION-COUNTER 1))
    (cond [(null? lst) '()]
          [(not (list? lst)) lst]
-         [(or (<= maxn 0) (> (length lst) MAX-LENGTH))
+         [(or (<= maxn 0) (> (length* lst) MAX-LENGTH))
           (if (null? return) lst (return NON-HALT))]
          [ #t (let* ((op (car lst))        ;; what is the first?
                      (args (cdr lst))      ;; what are the args

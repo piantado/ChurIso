@@ -1,7 +1,5 @@
 # Build up cons, cdr, car
 
-# NOTE: We had tried [constrain (%x %y) (cons %x %y)], but that doesn't work because that's %x applied to %y. 
-#       when really, we need to wrap them in a lambda as in the below:
 # https://en.wikipedia.org/wiki/Cons
 #cons:   La.Lb.Lm.(m a b)
 #car:    def car [z] (z ([p] [q] p))

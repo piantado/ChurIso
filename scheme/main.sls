@@ -34,7 +34,7 @@
 ;; and the skip for the first defined value. 0,0 will allow it to run normally in a single thread
 (define PARALLEL-START (string->number (third ARGS))) 
 (define PARALLEL-SKIP  (string->number (fourth ARGS))) 
-(displayn "# Running with " PARALLEL-START " " PARALLEL-SKIP)
+(displaynerr "# Running with " PARALLEL-START " " PARALLEL-SKIP)
 
 (define MAX-LENGTH 20) ; overall total max
 (define EOR #\nul) ; The end of record. Using #\nul will let you sort -z 
@@ -238,7 +238,7 @@
   ; kill everything if we've found too many
   (if (> found-count MAX-FIND)
       (begin
-        (displayn "# Terminating from exceeding MAX-FIND")
+        (displaynerr "# Terminating from exceeding MAX-FIND")
         (exit 0))  
       (set! found-count (+ found-count 1)))
   
