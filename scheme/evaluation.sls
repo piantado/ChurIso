@@ -12,7 +12,7 @@
  
  ;; prevent reductions from getting too long
  (define MAX-LENGTH 100)
- (define MAX-ITER   300) 
+ (define MAX-ITER   1000) 
  (define (set-MAXes! a b)  ; required by testing module to allow bigger expressions
    (set! MAX-LENGTH a)
    (set! MAX-ITER b))
@@ -34,7 +34,8 @@
  
  ; returns a partial list when we 
  (define (reduce-partial lst)
-   (reduce/cc '() MAX-ITER lst))
+   (reduce/cc '() MAX-ITER lst)) 
+ 
  
  ;; the kind of reduce you call within call/cc
  (define (reduce/cc return maxn lst)
@@ -83,7 +84,7 @@
 ;                        (reduce/cc return n (append (list (first args) (second args) (second args))
 ;                                                    (drop 2 args)))]
 ;                       
-                       [ #t (cons op (map (lambda (li) (reduce/cc return n li))
+                       [ #t (cons op (map (lambda (li) (reduce/cc return (floor (/ n (length args))) li)) ;; divide up evaluation steps n among each, or else we can get huge explosions in running time
                                           args))]
                        )))]
          ))
