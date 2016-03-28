@@ -303,7 +303,7 @@
           [ #t  (let* ((to-define (first (append undefined-rhs undefined-lhs))))
                   (stream-for-each (lambda (v) 
                                      (if SHOW-BACKTRACKING
-                                         (displayn (string-repeat "\t" (length x)) ; tab to show progress
+                                         (displaynerr (string-repeat "\t" (length x)) ; tab to show progress
                                                    "Trying " to-define "=" v "\t with defines " x ))
                                      (call/cc (lambda (ret) (backtrack ret constraints (cons (list to-define v) x) length-bound)))
                                      null ;; must return a value or else scheme goes nuts
@@ -339,8 +339,8 @@
                      
                      (if DISPLAY-INCREMENTAL
                          (begin
-                           (displayn "# Trying " to-define " = " v "\t" (length (flatten v)) "\t found\t" found-count)
-                           (flush-output-port (current-output-port))))
+                           (displaynerr "# Trying " to-define " = " v "\t" (length (flatten v)) "\t found\t" found-count)
+                           (flush-output-port (current-error-port))))
                      
                      (call/cc (lambda (exit) 
                                 (backtrack exit 
