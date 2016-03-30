@@ -185,6 +185,15 @@
          (is-valid? reduced-rhs)
          (equal? (rebracket reduced-rhs) (rebracket reduced-lhs)))))
 
+(define (normal-form-unequal? lhs rhs)
+  ; This would be the same as (not (normal-form-equal ..)) except that
+  ; we don't want to count NON-HALT as satisfying !=
+  (let ((reduced-lhs (reduce lhs))
+        (reduced-rhs (reduce rhs)))
+    (and (is-valid? reduced-lhs) ;; if there is a problem, return; else remove constraint and recurse
+         (is-valid? reduced-rhs)
+         (not (equal? (rebracket reduced-rhs) (rebracket reduced-lhs))))))
+
 ; check if the partial evaluations are equal
 (define (trace-approx-equal? lhs rhs)
   (>= (prefix-check (reduce-partial lhs)
@@ -299,9 +308,9 @@
         (cond           
           ; if we have defined everything
           [(and (null? undefined-lhs) (null? undefined-rhs))
-           (if ((cond [(equal? constraint-type '=trace=) (lambda (lhs rhs)      (trace-approx-equal? (substitute lhs x) (substitute rhs x))) ] 
-                      [(equal? constraint-type '=)       (lambda (lhs rhs)      (normal-form-equal?  (substitute lhs x) (substitute rhs x))) ]
-                      [(equal? constraint-type '!=)      (lambda (lhs rhs) (not (normal-form-equal?  (substitute lhs x) (substitute rhs x))))])
+           (if ((cond [(equal? constraint-type '=trace=) (lambda (lhs rhs) (trace-approx-equal? (substitute lhs x) (substitute rhs x))) ] 
+                      [(equal? constraint-type '=)       (lambda (lhs rhs) (normal-form-equal?  (substitute lhs x) (substitute rhs x))) ]
+                      [(equal? constraint-type '!=)      (lambda (lhs rhs) (normal-form-unequal?  (substitute lhs x) (substitute rhs x)))])
                 lhs rhs)     
                (backtrack return (cdr constraints) x length-bound)
                (return))]
