@@ -25,7 +25,7 @@
 (define ARGS (command-line))
 (if (< (length ARGS) 4)
     (begin
-      (displaynerr "Input format must be <base facts file> <start> <skip>")
+      (displaynerr "Input format must be <base facts> <start> <skip>")
       (exit 1)))
 
 (define DATA-FILE (second ARGS)) ;"data/boolean-quantifier.txt")
@@ -79,6 +79,11 @@
                               (C (S (S (K S) (S (K K) (S (K S) (S (S (K S) (S (K K) (S K K))) (K (S K K)))))) (K (S (K K) (S K K)))))
                               (B (S (S (K S) (S (K K) (S (K S) (S (K K) (S K K))))) (K (S (S (K S) (S (K K) (S K K))) (K (S K K))))))
                               ))
+
+
+; Sort so that the defines = are always first, since these provide the strongest constraints
+(set! defines (append (filter (lambda (ci) (equal? (second ci) '=)) constraints)
+                      (filter (lambda (ci) (not (equal? (second ci) '=))) constraints)))
 
 (displaynerr "# Constraints: " constraints)
 (displaynerr "# Uniques " uniques)
