@@ -15,7 +15,9 @@ for N in xrange(1,7):
 
     with open('../abn-%s.txt'%N, 'w') as f:
         print >>f, "[define True (K K)]"
-
+        print >>f, "[limit a 5]"
+        print >>f, "[limit b 5]"
+        
         for n in xrange(1, N+SHOW+1):
 
             nxtlst = ['a'+x for x in lst] + ['b'+x for x in lst]

@@ -38,15 +38,15 @@
 
 (define MAX-LENGTH 20) ; overall total max
 (define EOR #\nul) ; The end of record. Using #\nul will let you sort -z 
-(define MAX-FIND 1000)
+(define MAX-FIND 10000)
 (define PREFIX-DEPTH 10) ; when we say that prefixes must be equal, how deep do they have to be to?
-(define COMBINATOR-FILTER 'compressed) ; normal (must be normal form), compressed (non-normal forms are okay as long as they are shorter than the normal form), or none (all combinators)
+(define COMBINATOR-FILTER 'normal) ; normal (must be normal form), compressed (non-normal forms are okay as long as they are shorter than the normal form), or none (all combinators)
 
 ; How do we define uniqueness when we enforce it? 
 ; Other options include trace-approx-equal? and equal?
 (define (are-combinators-equal? lhs rhs)  (normal-form-equal? lhs rhs))
 
-(define COMBINATOR-BASIS `(S K)) ; ,Isk ,Bsk ,Csk)); B C))
+(define COMBINATOR-BASIS '(S K I B C))
 
 (define DISPLAY-INCREMENTAL (or (member "--incremental" ARGS)
                                 (member "--verbose" ARGS))) ; display the outermost search to show progress?
@@ -54,7 +54,7 @@
 
 ;; Counters
 (define GLOBAL-BACKTRACK-COUNT 0) ;; how many times have we called backtrack?
-(define found-count 0) ;; how mamny did we find?
+(define found-count 0) ;; how many did we find?
 
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; Load the data
@@ -71,6 +71,14 @@
 (define uniques        (map cdr    (filter (lambda (x) (eqv? (first x) 'unique)) all-input)))
 (define defines        (map (lambda (ai) (list (first ai) (reduce (second ai))));; reduce so "showing" works right for things with extra parens
                             (map cdr    (filter (lambda (x) (eqv? (first x) 'define)) all-input))))
+
+; If any of these are seen, their complexity (in printout) is measured by runnign them in this way. 
+; So you can search with I, C, B as primitives (for speed) but measure their complexity through S,K (for parsimony)
+(define defined-combinators '(
+                              (I (S K K))
+                              (C (S (S (K S) (S (K K) (S (K S) (S (S (K S) (S (K K) (S K K))) (K (S K K)))))) (K (S (K K) (S K K)))))
+                              (B (S (S (K S) (S (K K) (S (K S) (S (K K) (S K K))))) (K (S (S (K S) (S (K K) (S K K))) (K (S K K))))))
+                              ))
 
 (displaynerr "# Constraints: " constraints)
 (displaynerr "# Uniques " uniques)
@@ -192,10 +200,9 @@
           (if (eqv? x y) +inf.0 0))))
 ;(prefix-check '(a a (c d) b (a b (c d))) '(a a (d d) b (a b (c d e))))
 
-;(displayn (trace-approx-equal? '(Y f)
-;                          '(f (Y f))
-;                          ;'((Y ((S ((S ((S ((S ((S ((S ((S ((S ((S ((S S) S)) S)) S)) S)) S)))))))))))))))
-;                          '((Y (S (K (S I I)) (S (S (K S) K) (K (S I I))))))))
+;(displayn (trace-approx-equal? '((S (K (S I I)) (S (S (K S) K) (K (S I I)))) f)
+;                               '(f ((S (K (S I I)) (S (S (K S) K) (K (S I I)))) f))
+;                               ))
 
 
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -211,8 +218,17 @@
   ; get a count of running time for the constraints
   (define running-time 
     (let ((start-count (get-reduction-count)))
-      (for ci in constraints
-        (reduce (substitute ci x)))
+      (for c in constraints
+        (let* ((lhs             (first c))
+               (constraint-type (second c))
+               (rhs             (third c))
+               (lhs-subbed      (substitute (substitute lhs x) defined-combinators))
+               (rhs-subbed      (substitute (substitute rhs x) defined-combinators)))
+          
+          ; and reduce lhs and rhs
+          (reduce lhs-subbed)
+          (reduce rhs-subbed)))
+      
       (- (get-reduction-count) start-count)))
   
   ; Display the total length and running time
@@ -220,7 +236,8 @@
   
   ; Display the actual values
   (for xi in x
-    (displayn "let\t" (first xi) "\t" (second xi) ))
+    (displayn ";" (first xi) " = " (second xi) )
+    (displayn (substitute (first xi) defined-combinators) " = " (substitute (second xi) defined-combinators) ))
   
   ; print the show: what you compute, the outcome, and a list of things its equal to
   (for hi in show
@@ -278,8 +295,7 @@
         ;(displayn "\tundefined-rhs = " undefined-rhs)
         ;(displayn "\tundefined-lhs = " undefined-lhs)
         
-        (cond 
-          
+        (cond           
           ; if we have defined everything
           [(and (null? undefined-lhs) (null? undefined-rhs))
            (if ((cond [(equal? constraint-type '=trace=) (lambda (lhs rhs)      (trace-approx-equal? (substitute lhs x) (substitute rhs x))) ] 
@@ -304,7 +320,7 @@
                   (stream-for-each (lambda (v) 
                                      (if SHOW-BACKTRACKING
                                          (displaynerr (string-repeat "\t" (length x)) ; tab to show progress
-                                                   "Trying " to-define "=" v "\t with defines " x ))
+                                                      "Trying " to-define "=" v "\t with defines " x ))
                                      (call/cc (lambda (ret) (backtrack ret constraints (cons (list to-define v) x) length-bound)))
                                      null ;; must return a value or else scheme goes nuts
                                      )
