@@ -25,7 +25,7 @@
 (define ARGS (command-line))
 (if (< (length ARGS) 4)
     (begin
-      (displaynerr "Input format must be <constraint file> <start> <skip>")
+      (displaynerr "Input format must be <base facts file> <start> <skip>")
       (exit 1)))
 
 (define DATA-FILE (second ARGS)) ;"data/boolean-quantifier.txt")
@@ -36,8 +36,8 @@
 (define PARALLEL-SKIP  (string->number (fourth ARGS))) 
 (displaynerr "# Running with " PARALLEL-START " " PARALLEL-SKIP)
 
-(define MAX-LENGTH 20) ; overall total max
-(define EOR #\nul) ; The end of record. Using #\nul will let you sort -z 
+(define MAX-LENGTH 20) ; overall total max for use in search
+(define EOR #\nul) ; The end of record. Using #\nul will let you sort -z with multiline output
 (define MAX-FIND 10000)
 (define PREFIX-DEPTH 10) ; when we say that prefixes must be equal, how deep do they have to be to?
 (define COMBINATOR-FILTER 'normal) ; normal (must be normal form), compressed (non-normal forms are okay as long as they are shorter than the normal form), or none (all combinators)
@@ -89,6 +89,7 @@
 (displaynerr "# PREFIX-DEPTH " PREFIX-DEPTH)
 (displaynerr "# COMBINATOR-FILTER " COMBINATOR-FILTER)
 (displaynerr "# COMBINATOR-BASIS " COMBINATOR-BASIS)
+(displaynerr "# DEFINED COMBINATORS " defined-combinators)
 
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; Helper functions
@@ -204,7 +205,6 @@
 ;                               '(f ((S (K (S I I)) (S (S (K S) K) (K (S I I)))) f))
 ;                               ))
 
-
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; How to display a winner
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -245,10 +245,7 @@
       (displayn "showing\t" hi " -> " rho 
                 " which equals " (map first (filter (lambda (a) (are-combinators-equal? (second a) rho )) x)) )))
   
-  ; and another format
-  ;(displayn "# " x )
   (displayn "---------------------------\n" EOR) ; end in #\0 so we can sort -z by multiple lines
-  
   
   (flush-output-port (current-output-port))
   
@@ -261,7 +258,6 @@
   
   
   )
-
 
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; Main backtracking
@@ -307,7 +303,9 @@
           
           ;; we can push a constraint TODO: MAKE THIS WORK IN EITHER ORDER
           ;; NOTE: WE do *not* enforce the length bound here
-          [(and (null? undefined-rhs) (not (list? lhs))) 
+          [(and (null? undefined-rhs) 
+                (not (list? lhs))
+                (equal? constraint-type '=))
            (let ((reduced-rhs (rebracket (reduce (substitute rhs x)))))
              (if (and (check-unique lhs reduced-rhs x) ;; Enforce uniqueness constraint
                       (is-valid? reduced-rhs)
