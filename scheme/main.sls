@@ -232,7 +232,7 @@
       (- (get-reduction-count) start-count)))
   
   ; Display the total length and running time
-  (displayn found-count "\t" (apply + lengths) "\t" (apply max lengths) "\t" running-time "\t" GLOBAL-BACKTRACK-COUNT)
+  (displayn "number" found-count "\t" (apply max lengths) "\t"  (apply + lengths) "\t" running-time "\t" GLOBAL-BACKTRACK-COUNT)
   
   ; Display the actual values
   (for xi in x
