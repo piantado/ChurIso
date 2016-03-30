@@ -212,7 +212,7 @@
 (define (display-winner x) 
   
   ;; just gather some info on this -- the lengths of all components
-  (define lengths (map (lambda (y) (length (flatten y)))
+  (define lengths (map (lambda (y) (length (flatten (substitute y defined-combinators))))
                        (map second x)))
   
   ; get a count of running time for the constraints
