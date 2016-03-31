@@ -308,9 +308,11 @@
         (cond           
           ; if we have defined everything
           [(and (null? undefined-lhs) (null? undefined-rhs))
-           (if ((cond [(equal? constraint-type '=trace=) (lambda (lhs rhs) (trace-approx-equal? (substitute lhs x) (substitute rhs x))) ] 
-                      [(equal? constraint-type '=)       (lambda (lhs rhs) (normal-form-equal?  (substitute lhs x) (substitute rhs x))) ]
-                      [(equal? constraint-type '!=)      (lambda (lhs rhs) (normal-form-unequal?  (substitute lhs x) (substitute rhs x)))])
+           (if ((cond [(equal? constraint-type '~=) (lambda (lhs rhs) (trace-approx-equal?  (substitute lhs x) (substitute rhs x))) ] 
+                      [(equal? constraint-type '=)  (lambda (lhs rhs) (normal-form-equal?   (substitute lhs x) (substitute rhs x))) ]
+                      [(equal? constraint-type '^=) (lambda (lhs rhs) (not (normal-form-equal?   (substitute lhs x) (substitute rhs x))))]; okay if they are NON-HALT
+                      [(equal? constraint-type '!=) (lambda (lhs rhs) (normal-form-unequal? (substitute lhs x) (substitute rhs x))) ] ; forbid NON-HALT
+                      )
                 lhs rhs)     
                (backtrack return (cdr constraints) x length-bound)
                (return))]
@@ -327,15 +329,15 @@
                  (return)))] ;;otherwise add and recurse
           
           ; Push a constraint ->
-          [(and (null? undefined-lhs) 
-                (not (list? rhs))
-                (equal? constraint-type '=))
-           (let ((reduced-lhs (rebracket (reduce (substitute lhs x)))))
-             (if (and (check-unique rhs reduced-lhs x) ;; Enforce uniqueness constraint
-                      (is-valid? reduced-lhs)
-                      (<= (length (flatten reduced-lhs)) (value-of rhs limits +inf.0))) ;; enforce depth bound
-                 (backtrack return (cdr constraints) (cons (list rhs reduced-lhs) x) length-bound)
-                 (return)))] ;;otherwise add and recurse
+;          [(and (null? undefined-lhs) 
+;                (not (list? rhs))
+;                (equal? constraint-type '=))
+;           (let ((reduced-lhs (rebracket (reduce (substitute lhs x)))))
+;             (if (and (check-unique rhs reduced-lhs x) ;; Enforce uniqueness constraint
+;                      (is-valid? reduced-lhs)
+;                      (<= (length (flatten reduced-lhs)) (value-of rhs limits +inf.0))) ;; enforce depth bound
+;                 (backtrack return (cdr constraints) (cons (list rhs reduced-lhs) x) length-bound)
+;                 (return)))] ;;otherwise add and recurse
           
           
           ;; else we must search

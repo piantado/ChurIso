@@ -32,14 +32,15 @@ def print_data_for(stop, istraining, f):
         
         #print digits
     
-for t in xrange(1,6+1):
+for t in xrange(1,7+1):
     with open('../quantifiers-%s.txt'%t, 'w') as f:
         print >>f, "[define True (K K)]"
         print >>f, "[define False (K)]"
         print >>f, "[unique exists forall]"
         
+        for i in xrange(1, t+1):
+            print_data_for(i, True, f)
         
-        print_data_for(t, True, f)
         print_data_for(t+1, False, f)
         print_data_for(t+2, False, f)
         print_data_for(t+3, False, f)

@@ -9,12 +9,12 @@ from itertools import product
 
 SHOW = 4 # how many deeper to show?
 
-for N in xrange(1,7):
+for N in xrange(1,9):
 
     lst = ['']
 
     with open('../abn-%s.txt'%N, 'w') as f:
-        print >>f, "[define True (K K)]"
+        #print >>f, "[define True (K K)]"
         print >>f, "[limit a 5]"
         print >>f, "[limit b 5]"
         
