@@ -13,8 +13,8 @@
  ; define some kinds of combinators that can be used
  ; in our basis, if we want
  (define Isk '(S K K))
- (define Csk '(S (S (K S) (S (K K) (S (K S) (S (S (K S) (S (K K) (S K K))) (K (S K K)))))) (K (S (K K) (S K K)))))
- (define Bsk '(S (S (K S) (S (K K) (S (K S) (S (K K) (S K K))))) (K (S (S (K S) (S (K K) (S K K))) (K (S K K))))))
+ (define Csk '(S (K (S (K (S S (K K))) K)) S)   )
+ (define Bsk '(S (K S) K) )
  
  ;; We might be able to improve this by thinking about each integer as a code
  ;; for a tree, and then just iterating integers and translating them to trees

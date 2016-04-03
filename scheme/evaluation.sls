@@ -71,18 +71,18 @@
                         (reduce/cc return n (append (list (first args) (list (second args) (third args)))
                                                     (drop 3 args)))]
                        
-                       [(and (eq? op 'T) (>= largs 2)) ;; (T x y) = (y x)
-                        (reduce/cc return n (append (list (second args) (first args))
-                                                    (drop 2 args)))]
-                       [(and (eq? op 'Y) (>= largs 1)) ;; (Y x) =(x (Y x))
-                        (reduce/cc return n (append (list (first args) (list 'Y (first args)))
-                                                    (drop 1 args)))]
-                       [(and (eq? op 'Z) (>= largs 2)) ;; (Z g v) = (g (Z g) v)
-                        (reduce/cc return n (append (list (first args) (list 'Z (first args)) (second args))
-                                                    (drop 2 args)))]
-                       [(and (eq? op 'W) (>= largs 2)) ;; (W x y) = (x y y)
-                        (reduce/cc return n (append (list (first args) (second args) (second args))
-                                                    (drop 2 args)))]
+;                       [(and (eq? op 'T) (>= largs 2)) ;; (T x y) = (y x)
+;                        (reduce/cc return n (append (list (second args) (first args))
+;                                                    (drop 2 args)))]
+;                       [(and (eq? op 'Y) (>= largs 1)) ;; (Y x) =(x (Y x))
+;                        (reduce/cc return n (append (list (first args) (list 'Y (first args)))
+;                                                    (drop 1 args)))]
+;                       [(and (eq? op 'Z) (>= largs 2)) ;; (Z g v) = (g (Z g) v)
+;                        (reduce/cc return n (append (list (first args) (list 'Z (first args)) (second args))
+;                                                    (drop 2 args)))]
+;                       [(and (eq? op 'W) (>= largs 2)) ;; (W x y) = (x y y)
+;                        (reduce/cc return n (append (list (first args) (second args) (second args))
+;                                                    (drop 2 args)))]
                        ;                       
                        [ #t (cons op (map (lambda (li) (reduce/cc return (floor (/ n (length args))) li)) ;; divide up evaluation steps n among each, or else we can get huge explosions in running time
                                           args))]

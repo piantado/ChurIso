@@ -39,7 +39,7 @@
 (define MAX-LENGTH 20) ; overall total max for use in search
 (define EOR #\nul) ; The end of record. Using #\nul will let you sort -z with multiline output
 (define MAX-FIND 10000)
-(define PREFIX-DEPTH 10) ; when we say that prefixes must be equal, how deep do they have to be to?
+(define PREFIX-DEPTH 25) ; when we say that prefixes must be equal, how deep do they have to be to?
 (define COMBINATOR-FILTER 'normal) ; normal (must be normal form), compressed (non-normal forms are okay as long as they are shorter than the normal form), or none (all combinators)
 
 ; How do we define uniqueness when we enforce it? 
@@ -74,10 +74,11 @@
 
 ; If any of these are seen, their complexity (in printout) is measured by runnign them in this way. 
 ; So you can search with I, C, B as primitives (for speed) but measure their complexity through S,K (for parsimony)
+; Here, we have defined B and C using cl's "tromp" algorithm to minimize the number of S,K
 (define defined-combinators '(
                               (I (S K K))
-                              (C (S (S (K S) (S (K K) (S (K S) (S (S (K S) (S (K K) (S K K))) (K (S K K)))))) (K (S (K K) (S K K)))))
-                              (B (S (S (K S) (S (K K) (S (K S) (S (K K) (S K K))))) (K (S (S (K S) (S (K K) (S K K))) (K (S K K))))))
+                              (C (S (K (S (K (S S (K K))) K)) S))
+                              (B (S (K S) K) )
                               ))
 
 
@@ -300,10 +301,10 @@
              (undefined-rhs (filter definable (flatten rhs)))
              )
         
-        (displayn "\tc = " c)
-        (displayn "\tx = " x)
-        (displayn "\tundefined-rhs = " undefined-rhs)
-        (displayn "\tundefined-lhs = " undefined-lhs)
+       ; (displayn "\tc = " c)
+       ; (displayn "\tx = " x)
+       ; (displayn "\tundefined-rhs = " undefined-rhs)
+       ; (displayn "\tundefined-lhs = " undefined-lhs)
         
         (cond           
           ; if we have defined everything
