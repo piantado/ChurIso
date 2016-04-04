@@ -345,14 +345,18 @@
           ;; else we must search
           [ #t  (let* ((to-define (first (append undefined-rhs undefined-lhs))))
                   (stream-for-each (lambda (v) 
+                                     ; Display if we should
                                      (if SHOW-BACKTRACKING
                                          (displaynerr (string-repeat "\t" (length x)) ; tab to show progress
                                                       "Trying " to-define "=" v "\t with defines " x ))
+                                     ; If we are too long, since we assuem in-order generation, we can return
+                                     (if (<= (length (flatten v)) (value-of to-define limits +inf.0))
+                                         (return))
+                                     
                                      (call/cc (lambda (ret) (backtrack ret constraints (cons (list to-define v) x) length-bound)))
                                      null ;; must return a value or else scheme goes nuts
                                      )
-                                   (stream-filter (lambda (r) (and (check-unique to-define r x)
-                                                                   (<= (length (flatten r)) (value-of to-define limits +inf.0))))
+                                   (stream-filter (lambda (r) (check-unique to-define r x))
                                                   ; This order matters a lot to uniqueness -- must be reduced before we
                                                   ; check uniqueness
                                                   (stream-filter (cond ((eqv? COMBINATOR-FILTER 'normal) is-normal-form?)
