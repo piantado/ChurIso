@@ -104,6 +104,10 @@
 (define (is-variable? a)
   (member a variables))
 
+(define (uses-variable? a)
+  (any (lambda (x) (is-variable? x))
+       (flatten a)))
+
 ;; like map, but recurses down lists of lists, applying l
 (define (sub-f f l)
   (cond [(null? l)  null]
@@ -251,7 +255,7 @@
   
   ; Display the actual values
   (for xi in x
-    (displayn (first xi) " = " (second xi) ))
+    (displayn ";   " (first xi) " = " (second xi) ))
   (for xi in x
     (displayn (substitute (first xi) defined-combinators) " = " (substitute (second xi) defined-combinators) ))
   
@@ -327,6 +331,7 @@
              ;(displayn "PUSHING " lhs reduced-rhs)
              (if (and (check-unique lhs reduced-rhs x) ;; Enforce uniqueness constraint
                       (is-valid? reduced-rhs)
+                      (not (uses-variable? reduced-rhs)) ;; cannot push variable names
                       (<= (length (flatten reduced-rhs)) (value-of lhs limits +inf.0))) ;; enforce depth bound
                  (backtrack return (cdr constraints) (cons (list lhs reduced-rhs) x) length-bound)
                  (return)))] ;;otherwise add and recurse
@@ -338,6 +343,7 @@
            (let ((reduced-lhs (rebracket (reduce (substitute lhs x)))))
              (if (and (check-unique rhs reduced-lhs x) ;; Enforce uniqueness constraint
                       (is-valid? reduced-lhs)
+                      (not (uses-variable? reduced-lhs)) ;;; cannot push variable names
                       (<= (length (flatten reduced-lhs)) (value-of rhs limits +inf.0))) ;; enforce depth bound
                  (backtrack return (cdr constraints) (cons (list rhs reduced-lhs) x) length-bound)
                  (return)))] ;;otherwise add and recurse

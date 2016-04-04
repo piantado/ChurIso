@@ -6,40 +6,40 @@
 [unique braintree downtown park alewife riverside government northstation bowdoin state wonderland downtown foresthill oakgrove]
 #[unique red-north green-north blue-north orange-north] # what it means to move north on each line
 
-#[limit braintree 8]
-#[limit downtown 8]
-#[limit park 8]
-#[limit alewife 8] 
-#[limit riverside 8] 
-#[limit government 8] 
-#[limit northstation 8]
-#[limit bowdoin 8]
-#[limit state 8]
-#[limit wonderland 8]
-#[limit downtown 8]
-#[limit foresthill 8]
-#[limit oakgrove 8]
+[limit braintree 3]
+[limit downtown 3]
+[limit park 3]
+[limit alewife 3] 
+[limit riverside 3] 
+[limit government 3] 
+[limit northstation 3]
+[limit bowdoin 3]
+[limit state 3]
+[limit wonderland 3]
+[limit downtown 3]
+[limit foresthill 3]
+[limit oakgrove 3]
 
 # Ordering these 4 first seems to help a lot
-[constrain state    = (e orange-north downtown)]
-[constrain park     = (e red-north downtown)]
-[constrain government   = (e green-north park)]
-[constrain state        = (e blue-north government)]
 
-[constrain downtown = (e red-north braintree)]
-[constrain alewife  = (e red-north park)]
+[constrain park     = (red-north downtown)]
+[constrain government   = (green-north park)]
+[constrain state    = (blue-north government)]
+[constrain state    = (orange-north downtown)]
 
+[constrain park         = (green-north riverside)]
+[constrain government    = (blue-north bowdoin)]
+[constrain downtown = (orange-north foresthill)]
+[constrain downtown = (red-north braintree)]
+
+[constrain alewife  = (red-north park)]
 
 ## Seems hard to fit these given the above
-[constrain northstation = (e green-north government)]
-
+#[constrain northstation = (green-north government)]
 #[constrain northstation = (orange-north state)]
-[constrain government = (e blue-north bowdoin)]
 
-[constrain wonderland = (e blue-north state)]
-[constrain park         = (green-north riverside)]
+[constrain wonderland   = (blue-north state)]
 
-[constrain downtown     = (orange-north foresthill)]
 [constrain oakgrove     = (orange-north northstation)]
 
 
