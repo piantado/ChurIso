@@ -251,7 +251,8 @@
   
   ; Display the actual values
   (for xi in x
-    (displayn ";" (first xi) " = " (second xi) )
+    (displayn (first xi) " = " (second xi) ))
+  (for xi in x
     (displayn (substitute (first xi) defined-combinators) " = " (substitute (second xi) defined-combinators) ))
   
   ; print the show: what you compute, the outcome, and a list of things its equal to
