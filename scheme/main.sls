@@ -350,11 +350,13 @@
                                          (displaynerr (string-repeat "\t" (length x)) ; tab to show progress
                                                       "Trying " to-define "=" v "\t with defines " x ))
                                      ; If we are too long, since we assuem in-order generation, we can return
-                                     (if (<= (length (flatten v)) (value-of to-define limits +inf.0))
+                                     (if (>= (length (flatten v)) (value-of to-define limits +inf.0))
                                          (return))
                                      
+                                     ; else assign and recurse
                                      (call/cc (lambda (ret) (backtrack ret constraints (cons (list to-define v) x) length-bound)))
-                                     null ;; must return a value or else scheme goes nuts
+                                     
+                                     null ;; must return a friendly or else scheme goes nuts
                                      )
                                    (stream-filter (lambda (r) (check-unique to-define r x))
                                                   ; This order matters a lot to uniqueness -- must be reduced before we
