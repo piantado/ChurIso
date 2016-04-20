@@ -318,6 +318,8 @@
                       [(equal? constraint-type '=)  (lambda (lhs rhs) (normal-form-equal?   (substitute lhs x) (substitute rhs x))) ]
                       [(equal? constraint-type '^=) (lambda (lhs rhs) (not (normal-form-equal?   (substitute lhs x) (substitute rhs x))))]; okay if they are NON-HALT
                       [(equal? constraint-type '!=) (lambda (lhs rhs) (normal-form-unequal? (substitute lhs x) (substitute rhs x))) ] ; forbid NON-HALT
+                      [(equal? constraint-type 'in) (lambda (lhs rhs) (any (lambda (y) (normal-form-equal? y (substitute lhs x)))
+                                                                           (substitute rhs x)))] ;lhs reduces to anything on the rhs
                       )
                 lhs rhs)     
                (backtrack return (cdr constraints) x length-bound)
