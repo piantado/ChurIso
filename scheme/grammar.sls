@@ -21,8 +21,8 @@
  (import (rnrs)  (stp-lib)  (vicare) (rnrs eval (6)) (evaluation) )
  
  (define-syntax %churiso-parse%
-   (syntax-rules (:= ^= ~= == != in limit variable show unique)
-     ((_ x == y) (list 'constrain 'normal-form-equal? (quote x) (quote y)))
+   (syntax-rules (:= ^= ~= != = in limit variable show unique)
+     ((_ x = y)  (list 'constrain 'normal-form-equal? (quote x) (quote y)))
      ((_ x != y) (list 'constrain 'normal-form-unequal? (quote x) (quote y)))
      ((_ x ^= y) (list 'constrain 'not-normal-form-equal? (quote x) (quote y)))
      ((_ x ~= y) (list 'constrain 'trace-approx-equal? (quote x) (quote y)))

@@ -258,21 +258,24 @@
       (- (get-reduction-count) start-count)))
   
   ; Display the total length and running time
-  (displayn "number" found-count "\t" (apply max lengths) "\t"  (apply + lengths) "\t" running-time "\t" (* running-time (apply + lengths)) "\t" GLOBAL-BACKTRACK-COUNT)
+  (displayn "solution" found-count "\t" (apply max lengths) "\t"  (apply + lengths) "\t" running-time "\t" (* running-time (apply + lengths)) "\t" GLOBAL-BACKTRACK-COUNT)
   
   ; Display the actual values
+  (displayn "# ---------- In search basis ----------")
   (for xi in x
-    (displayn ";   " (first xi) " = " (second xi) ))
+    (displayn (first xi) " := " (second xi) ))
+  (displayn "# ---------- In SK basis ----------")
   (for xi in x
-    (displayn (substitute (first xi) defined-combinators) " = " (substitute (second xi) defined-combinators) ))
+    (displayn (substitute (first xi) defined-combinators) " := " (substitute (second xi) defined-combinators) ))
   
   ; print the show: what you compute, the outcome, and a list of things its equal to
+  (displayn "# Showing:")
   (for hi in show
     (let ((rho (reduce (substitute hi x))))
-      (displayn "showing\t" hi " -> " rho 
-                " which equals " (map first (filter (lambda (a) (are-combinators-equal? (second a) rho )) x)) )))
+      (displayn hi " -> " rho 
+                "\twhich equals " (map first (filter (lambda (a) (are-combinators-equal? (second a) rho )) x)) )))
   
-  (displayn "---------------------------\n" EOR) ; end in #\0 so we can sort -z by multiple lines
+  (displayn "# ##########################################################\n" EOR) ; end in #\0 so we can sort -z by multiple lines
   
   (flush-output-port (current-output-port))
   
