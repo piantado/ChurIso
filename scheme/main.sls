@@ -321,7 +321,12 @@
         (cond           
           ; if we have defined everything
           [(and (null? undefined-lhs) (null? undefined-rhs))
-           (if (apply constraint-type (list (substitute lhs x) (substitute rhs x))) ; functions defined above, applied to the substituted version
+           (if (cond [(eqv? constraint-type 'normal-form-equal?)     (normal-form-equal?     (substitute lhs x) (substitute rhs x))] ; NOTE: We could write with eval, but that might make fanciness harder later
+                     [(eqv? constraint-type 'normal-form-unequal?)   (normal-form-unequal?   (substitute lhs x) (substitute rhs x))]
+                     [(eqv? constraint-type 'not-normal-form-equal?) (not-normal-form-equal? (substitute lhs x) (substitute rhs x))]
+                     [(eqv? constraint-type 'trace-approx-equal?)    (trace-approx-equal?    (substitute lhs x) (substitute rhs x))]
+                     [(eqv? constraint-type 'normal-form-in?)        (normal-form-in?        (substitute lhs x) (substitute rhs x))]
+                     )
                ; If we satisfy this constraint
                (backtrack return (cdr constraints) x length-bound)
                (return))]
