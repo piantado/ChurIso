@@ -22,7 +22,7 @@
  
  (define-syntax %churiso-parse%
    (syntax-rules (:= ^= ~= != = in limit variable show unique)
-     ((_ x = y)  (list 'constrain 'normal-form-equal? (quote x) (quote y)))
+     ((_ x = y) (list 'constrain 'normal-form-equal? (quote x) (quote y)))
      ((_ x != y) (list 'constrain 'normal-form-unequal? (quote x) (quote y)))
      ((_ x ^= y) (list 'constrain 'not-normal-form-equal? (quote x) (quote y)))
      ((_ x ~= y) (list 'constrain 'trace-approx-equal? (quote x) (quote y)))
@@ -33,9 +33,9 @@
      ((_ show x )        (list 'show     (quote x) ))
      ((_ limit x y)      (list 'limit    (quote x) (quote y)))
      ((_ x := y)         (list 'define   (quote x) (quote y)))
-     ((_ x ...) (begin (displaynerr "ChurIso syntax error on: \"" (quote x) ... "\"")
-                       (flush-output-port (current-output-port))
-                       (exit 1)))
+     ;((_ x ...) (begin (displaynerr "ChurIso syntax error on: \"" (quote x) ... "\"")
+     ;                  (flush-output-port (current-output-port))
+     ;                  (exit 1)))
      ))
  )
 

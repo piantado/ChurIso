@@ -1,4 +1,4 @@
-(%y %x) == (reverse %x %y)
+(%y %x) = (reverse %x %y)
 show (reverse %x %y) 
 variable %x %y
 

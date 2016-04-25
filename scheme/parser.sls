@@ -10,7 +10,7 @@
  ; the macro %churiso-parse% that turns ChurIso source code into 
  ; a list of constraints
  (define PARSER-ENVIRONMENT
-   (environment '(grammar) ))
+   (environment '(grammar) '(rnrs) '(vicare) ))
  
  (define (load-and-parse in)
    (let ((l (get-line in)))
