@@ -218,10 +218,10 @@
  
  
  (define (is-blank-line? s)
-   (all (lambda (ci) (or (= ci #\space)
-                         (= ci #\tab)
-                         (= ci #\return)
-                         (= ci #\linefeed)))
+   (all (lambda (ci) (or (char=? ci #\space)
+                         (char=? ci #\tab)
+                         (char=? ci #\return)
+                         (char=? ci #\linefeed)))
         (string->list s)))
  
  ;; Load a file of S-expressions, skipping comment lines
