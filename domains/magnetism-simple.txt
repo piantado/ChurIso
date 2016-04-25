@@ -1,0 +1,44 @@
+# A simple version where we learn some positive and negative and examine the properties of a new element
+# which is not constrained to be p or n
+
+#unique repel attract p n
+
+# Define the interactions of positive and negative
+#repel   (combine p p) 
+#repel   (combine n n) 
+#attract (combine p n) 
+#attract (combine n p) 
+
+# examine a new guy
+#repel (combine x p)
+
+#show (combine p x)
+#show (combine n x)
+#show (combine x n)
+#show (combine non x)
+#show (combine x non)
+
+True := (K K)
+#unique p1 n1
+#unique p1 n2
+#unqiue p2 n1
+#unqiue p2 n2
+
+
+# TODO SWAP THE VALUYES
+True   != (attract p1 p2)
+True   != (attract p2 p1)
+True = (attract p1 n1)
+True = (attract p1 n2)
+True = (attract p2 n1)
+True = (attract p2 n2)
+
+True   != (attract n1 n2)
+True   != (attract n2 n1)
+True = (attract n1 p1)
+True = (attract n1 p2)
+True = (attract n2 p1)
+True = (attract n2 p2)
+
+# Give one example of a single interaction
+True = (attract n1 x1)

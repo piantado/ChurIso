@@ -1,0 +1,9 @@
+# Y* is the mutual recursion Y combinator
+
+variable %f %g
+
+(%f (%g (Y* %f %g))) ~= (Y* %f %g)
+
+
+
+

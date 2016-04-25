@@ -1,20 +1,20 @@
-[unique win lose draw]
-[unique rock papers scissors]
+unique win lose draw
+unique rock papers scissors
 
 # This is the version without a "play" operator
-[constrain win  = (rock scissors)]
-[constrain draw = (rock rock)]
-[constrain draw = (scissors scissors)]
-[constrain win  = (scissors paper)]
-[constrain win  = (paper rock) ]
-[constrain draw = (paper paper) ]
-[constrain lose = (rock paper) ]
-[constrain lose = (paper scissors) ]
-[constrain lose = (scissors rock) ]
+win  = (rock scissors)
+draw = (rock rock)
+draw = (scissors scissors)
+win  = (scissors paper)
+win  = (paper rock) 
+draw = (paper paper) 
+lose = (rock paper) 
+lose = (paper scissors) 
+lose = (scissors rock) 
 
-#[limit rock 3]
-#[limit paper 3]
-#[limit scissors 3]
+#limit rock 3
+#limit paper 3
+#limit scissors 3
 
 
 

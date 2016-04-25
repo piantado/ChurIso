@@ -1,7 +1,8 @@
-unique true false and or not
+
+
+unique true false and or not ifelse
 
 true  = (and true true)
-
 false = (and true false)
 false = (and false true)
 false = (and false false)
@@ -14,5 +15,11 @@ false = (or false false)
 false = (not true)
 true  = (not false)
 
-show (and true false)
-show (or false true)
+variable %x %y
+
+%x = (ifelse true %x %y)
+%y = (ifelse false %x %y)
+
+
+
+

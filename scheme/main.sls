@@ -14,7 +14,7 @@
 ;; #####################################################################################
 
 (import (rnrs) 
-        (combinators) (stp-lib) (evaluation) 
+        (combinators) (stp-lib) (evaluation) (parser)
         (srfi :41); streams
         )
 
@@ -60,10 +60,11 @@
 ; Load the data
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-(define all-input (load-file (open-input-file DATA-FILE)))
+(define all-input (load-and-parse (open-input-file DATA-FILE)))
 
-(define constraints  (map cdr    (filter (lambda (x) (eqv? (first x) 'constrain)) all-input))) ;normal constraints
+; go through all-input and make constraints, limits, variables, show
 
+(define constraints    (map cdr    (filter (lambda (x) (eqv? (first x) 'constrain)) all-input))) ;normal constraints
 (define show           (map second (filter (lambda (x) (eqv? (first x) 'show)) all-input)))
 (define limits         (map cdr    (filter (lambda (x) (eqv? (first x) 'limit)) all-input)))
 (define variables      (apply append  ; just a single list of all variables
@@ -190,6 +191,9 @@
          (is-valid? reduced-rhs)
          (equal? (rebracket reduced-rhs) (rebracket reduced-lhs)))))
 
+(define (not-normal-form-equal? lhs rhs)
+  (not (normal-form-equal? lhs rhs)))
+
 (define (normal-form-unequal? lhs rhs)
   ; This would be the same as (not (normal-form-equal ..)) except that
   ; we don't want to count NON-HALT as satisfying !=
@@ -205,6 +209,9 @@
                     (reduce-partial rhs))
       PREFIX-DEPTH))
 
+(define (normal-form-in? x ys)
+  (any (lambda (y) (normal-form-equal? x y))
+       ys))
 
 (define (prefix-check x y)
   ; how many symbols do I have to look at to find they're not equal?
@@ -238,8 +245,8 @@
   (define running-time 
     (let ((start-count (get-reduction-count)))
       (for c in constraints
-        (let* ((lhs             (first c))
-               (constraint-type (second c))
+        (let* ((constraint-type (first c))
+               (lhs             (second c))
                (rhs             (third c))
                (lhs-subbed      (substitute (substitute lhs x) defined-combinators))
                (rhs-subbed      (substitute (substitute rhs x) defined-combinators)))
@@ -251,21 +258,24 @@
       (- (get-reduction-count) start-count)))
   
   ; Display the total length and running time
-  (displayn "number" found-count "\t" (apply max lengths) "\t"  (apply + lengths) "\t" running-time "\t" (* running-time (apply + lengths)) "\t" GLOBAL-BACKTRACK-COUNT)
+  (displayn "solution" found-count "\t" (apply max lengths) "\t"  (apply + lengths) "\t" running-time "\t" (* running-time (apply + lengths)) "\t" GLOBAL-BACKTRACK-COUNT)
   
   ; Display the actual values
+  (displayn "# ---------- In search basis ----------")
   (for xi in x
-    (displayn ";   " (first xi) " = " (second xi) ))
+    (displayn (first xi) " := " (second xi) ))
+  (displayn "# ---------- In SK basis ----------")
   (for xi in x
-    (displayn (substitute (first xi) defined-combinators) " = " (substitute (second xi) defined-combinators) ))
+    (displayn (substitute (first xi) defined-combinators) " := " (substitute (second xi) defined-combinators) ))
   
   ; print the show: what you compute, the outcome, and a list of things its equal to
+  (displayn "# Showing:")
   (for hi in show
     (let ((rho (reduce (substitute hi x))))
-      (displayn "showing\t" hi " -> " rho 
-                " which equals " (map first (filter (lambda (a) (are-combinators-equal? (second a) rho )) x)) )))
+      (displayn hi " -> " rho 
+                "\twhich equals " (map first (filter (lambda (a) (are-combinators-equal? (second a) rho )) x)) )))
   
-  (displayn "---------------------------\n" EOR) ; end in #\0 so we can sort -z by multiple lines
+  (displayn "# ##########################################################\n" EOR) ; end in #\0 so we can sort -z by multiple lines
   
   (flush-output-port (current-output-port))
   
@@ -296,8 +306,8 @@
   (if (null? constraints) 
       (display-winner x) ;; good news!
       (let* ((c           (car constraints))
-             (lhs         (first c))
-             (constraint-type (second c))
+             (constraint-type (first c))
+             (lhs         (second c))
              (rhs         (third c))
              (in-x?       (lambda (a) (assoc a x)))
              (definable   (lambda (a) (and (not (in-x? a)) ; ;what can we define? Must not be defined (not in x) and not be a variable
@@ -314,21 +324,20 @@
         (cond           
           ; if we have defined everything
           [(and (null? undefined-lhs) (null? undefined-rhs))
-           (if ((cond [(equal? constraint-type '~=) (lambda (lhs rhs) (trace-approx-equal?  (substitute lhs x) (substitute rhs x))) ] 
-                      [(equal? constraint-type '=)  (lambda (lhs rhs) (normal-form-equal?   (substitute lhs x) (substitute rhs x))) ]
-                      [(equal? constraint-type '^=) (lambda (lhs rhs) (not (normal-form-equal?   (substitute lhs x) (substitute rhs x))))]; okay if they are NON-HALT
-                      [(equal? constraint-type '!=) (lambda (lhs rhs) (normal-form-unequal? (substitute lhs x) (substitute rhs x))) ] ; forbid NON-HALT
-                      [(equal? constraint-type 'in) (lambda (lhs rhs) (any (lambda (y) (normal-form-equal? y (substitute lhs x)))
-                                                                           (substitute rhs x)))] ;lhs reduces to anything on the rhs ;; TODO: This MUST come now after all symbols are defined or else constrain pushing gets confused
-                      )
-                lhs rhs)     
+           (if (cond [(eqv? constraint-type 'normal-form-equal?)     (normal-form-equal?     (substitute lhs x) (substitute rhs x))] ; NOTE: We could write with eval, but that might make fanciness harder later
+                     [(eqv? constraint-type 'normal-form-unequal?)   (normal-form-unequal?   (substitute lhs x) (substitute rhs x))]
+                     [(eqv? constraint-type 'not-normal-form-equal?) (not-normal-form-equal? (substitute lhs x) (substitute rhs x))]
+                     [(eqv? constraint-type 'trace-approx-equal?)    (trace-approx-equal?    (substitute lhs x) (substitute rhs x))]
+                     [(eqv? constraint-type 'normal-form-in?)        (normal-form-in?        (substitute lhs x) (substitute rhs x))]
+                     )
+               ; If we satisfy this constraint
                (backtrack return (cdr constraints) x length-bound)
                (return))]
           
           ; Push a constraint <-
           [(and (null? undefined-rhs) 
                 (not (list? lhs))
-                (equal? constraint-type '=))
+                (equal? constraint-type 'normal-form-equal?))
            (let ((reduced-rhs (rebracket (reduce (substitute rhs x)))))
              ;(displayn "PUSHING " lhs reduced-rhs)
              (if (and (check-unique lhs reduced-rhs x) ;; Enforce uniqueness constraint
@@ -337,19 +346,6 @@
                       (<= (length (flatten reduced-rhs)) (value-of lhs limits +inf.0))) ;; enforce depth bound
                  (backtrack return (cdr constraints) (cons (list lhs reduced-rhs) x) length-bound)
                  (return)))] ;;otherwise add and recurse
-          
-          ; Push a constraint ->
-          [(and (null? undefined-lhs) 
-                (not (list? rhs))
-                (equal? constraint-type '=))
-           (let ((reduced-lhs (rebracket (reduce (substitute lhs x)))))
-             (if (and (check-unique rhs reduced-lhs x) ;; Enforce uniqueness constraint
-                      (is-valid? reduced-lhs)
-                      (not (uses-variable? reduced-lhs)) ;;; cannot push variable names
-                      (<= (length (flatten reduced-lhs)) (value-of rhs limits +inf.0))) ;; enforce depth bound
-                 (backtrack return (cdr constraints) (cons (list rhs reduced-lhs) x) length-bound)
-                 (return)))] ;;otherwise add and recurse
-          
           
           ;; else we must search
           [ #t  (let* ((to-define (first (append undefined-rhs undefined-lhs))))

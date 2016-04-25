@@ -1,0 +1,84 @@
+unique a b c 1
+
+#https://en.wikipedia.org/wiki/Triangle_group
+
+# Inverse
+1 = (a a)
+1 = (b b)
+1 = (c c)
+
+# Identity
+a = (1 a)
+b = (1 b)
+c = (1 c)
+
+# 3 3 3 case
+1 = (b (a (b (a (b a)))))
+1 = (b (c (b (c (b c)))))
+1 = (c (a (c (a (c a)))))
+
+
+# Asociativity axioms
+
+(a (a a)) = ((a a) a)
+(a (a b)) = ((a a) b)
+(a (a c)) = ((a a) c)
+(a (a 1)) = ((a a) 1)
+
+(a (b a)) = ((a b) a)
+(a (b b)) = ((a b) b)
+(a (b c)) = ((a b) c)
+(a (b 1)) = ((a b) 1)
+
+(a (c a)) = ((a c) a)
+(a (c b)) = ((a c) b)
+(a (c c)) = ((a c) c)
+(a (c 1)) = ((a c) 1)
+
+
+
+(b (a a)) = ((b a) a)
+(b (a b)) = ((b a) b)
+(b (a c)) = ((b a) c)
+(b (a 1)) = ((b a) 1)
+
+(b (b a)) = ((b b) a)
+(b (b b)) = ((b b) b)
+(b (b c)) = ((b b) c)
+(b (b 1)) = ((b b) 1)
+
+(b (c a)) = ((b c) a)
+(b (c b)) = ((b c) b)
+(b (c c)) = ((b c) c)
+(b (c 1)) = ((b c) 1)
+
+
+
+(c (a a)) = ((c a) a)
+(c (a b)) = ((c a) b)
+(c (a c)) = ((c a) c)
+(c (a 1)) = ((c a) 1)
+
+(c (b a)) = ((c b) a)
+(c (b b)) = ((c b) b)
+(c (b c)) = ((c b) c)
+(c (b 1)) = ((c b) 1)
+
+(c (c a)) = ((c c) a)
+(c (c b)) = ((c c) b)
+(c (c c)) = ((c c) c)
+(c (c 1)) = ((c c) 1)
+
+
+
+# closure
+(a a) in (1 a b c)
+(a b) in (1 a b c)
+(a c) in (1 a b c)
+(b a) in (1 a b c)
+(b b) in (1 a b c)
+(b c) in (1 a b c)
+(c a) in (1 a b c)
+(c b) in (1 a b c)
+(c c) in (1 a b c)
+

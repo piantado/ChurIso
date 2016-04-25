@@ -1,45 +1,26 @@
 # Add an example of an arbitrary graph
-# This requires encoding the lines since if we don't,
-# we can run into contradictions (assuming uniqueness)
-# like if alewife=(north park) and government=(north park)
 
-[unique braintree downtown park alewife riverside government northstation bowdoin state wonderland downtown foresthill oakgrove]
-#[unique red-north green-north blue-north orange-north] # what it means to move north on each line
-
-[limit braintree 3]
-[limit downtown 3]
-[limit park 3]
-[limit alewife 3] 
-[limit riverside 3] 
-[limit government 3] 
-[limit northstation 3]
-[limit bowdoin 3]
-[limit state 3]
-[limit wonderland 3]
-[limit downtown 3]
-[limit foresthill 3]
-[limit oakgrove 3]
+unique braintree downtown park alewife riverside government northstation bowdoin state wonderland downtown foresthill oakgrove
 
 # Ordering these 4 first seems to help a lot
+park     = (red-north downtown)
+government   = (green-north park)
+state    = (blue-north government)
+state    = (orange-north downtown)
 
-[constrain park     = (red-north downtown)]
-[constrain government   = (green-north park)]
-[constrain state    = (blue-north government)]
-[constrain state    = (orange-north downtown)]
+park         = (green-north riverside)
+government    = (blue-north bowdoin)
+downtown = (orange-north foresthill)
+downtown = (red-north braintree)
 
-[constrain park         = (green-north riverside)]
-[constrain government    = (blue-north bowdoin)]
-[constrain downtown = (orange-north foresthill)]
-[constrain downtown = (red-north braintree)]
-
-[constrain alewife  = (red-north park)]
+alewife  = (red-north park)
 
 ## Seems hard to fit these given the above
-#[constrain northstation = (green-north government)]
-#[constrain northstation = (orange-north state)]
+#northstation = (green-north government)
+#northstation = (orange-north state)
 
-[constrain wonderland   = (blue-north state)]
+wonderland   = (blue-north state)
 
-[constrain oakgrove     = (orange-north northstation)]
+oakgrove     = (orange-north northstation)
 
 

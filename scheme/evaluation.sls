@@ -89,53 +89,6 @@
                        )))]
          ))
  
- 
- ;; the kind of reduce you call within call/cc
- ; (define (reduce/cc return maxn trace-hash lst)  
- ;   
- ;   ; if trace-stack is provided, we store all stages of the evaluation in it
- ;   ; so that we can 
- ;   (if (hashtable? trace-hash)
- ;       (hashtable-set! trace-hash (rebracket lst) 1))
- ;   
- ;   (set! REDUCTION-COUNTER (+ REDUCTION-COUNTER 1))
- ;   (cond [(null? lst) '()]
- ;         [(not (list? lst)) lst]
- ;         [(or (<= maxn 0) (> (length lst) MAX-LENGTH)) (return NON-HALT)]
- ;         [ #t (let* ((op (car lst))        ;; what is the first?
- ;                     (args (cdr lst))      ;; what are the args
- ;                     (largs (length args)) ;; how many args
- ;                     (n (- maxn 1)))
- ;                (rebracket
- ;                (unlist-singleton (if (not (member op '(I K S C B T Y Z W)))
- ;                                      (cons op (map (lambda (li) (reduce/cc return n #f li)) ; no trace hash in sub-expressions
- ;                                                    args))
- ;                                      
- ;                                      (reduce/cc return 
- ;                                                 n 
- ;                                                 trace-hash 
- ;                                                 (cond [(and (list? op) #t) (append op args)] ;; ((f x) y) -> (f x y)
- ;                                                       [(and (eq? op 'I) (>= largs 1)) args] ; (I x) -> x
- ;                                                       [(and (eq? op 'K) (>= largs 2)) (cons (first args) (drop 2 args))]; (K x y) = x
- ;                                                       [(and (eq? op 'S) (>= largs 3)) (append (list (first args) 
- ;                                                                                                     (third args) 
- ;                                                                                                     (list (second args) (third args))) 
- ;                                                                                               (drop 3 args))] ; (S x y z) = (x z (y z))
- ;                                                       [(and (eq? op 'C) (>= largs 3)) (append (list (first args) (third args) (second args))
- ;                                                                                               (drop 3 args))] ;; (C f x y) = (f y x)
- ;                                                       [(and (eq? op 'B) (>= largs 3))  (append (list (first args) (list (second args) (third args)))
- ;                                                                                                (drop 3 args))] ;; (B f g x) = (f (g x))
- ;                                                       [(and (eq? op 'T) (>= largs 2)) (append (list (second args) (first args))
- ;                                                                                               (drop 2 args))] ;; (T x y) = (y x)
- ;                                                       [(and (eq? op 'Y) (>= largs 1))  (append (list (first args) (list 'Y (first args)))
- ;                                                                                                (drop 1 args))] ;; (Y x) =(x (Y x))
- ;                                                       [(and (eq? op 'Z) (>= largs 2)) (append (list (first args) (list 'Z (first args)) (second args))
- ;                                                                                               (drop 2 args))] ;; (Z g v) = (g (Z g) v)
- ;                                                       [(and (eq? op 'W) (>= largs 2)) (append (list (first args) (second args) (second args))
- ;                                                                                               (drop 2 args))] ;; (W x y) = (x y y)                                  
- ;                                                       ))
- ;                                      ))))]))
- 
  ;; evlauation will so conversions like ((S I) S) -> (S I S), following
  ;; the standard combinatory logic conventions. We may want to re-bracket though
  ;; so combinators can be compared to their original form, or displayed as binary

@@ -1,7 +1,7 @@
 (library 
  (stp-lib)
  (export displayn displaynerr null first second third fourth fifth sixth seventh member?
-         flatten append apply-append unlist-singleton str-split is-comment-line load-file has-value value-of range all any
+         flatten append apply-append unlist-singleton str-split is-comment-line? is-blank-line? load-file has-value value-of range all any
          string->S-expression drop assert-equal repeat string-repeat mydisplay last length*
          )
  (import (rnrs) ) ;  (rnrs io (6)) 
@@ -211,10 +211,18 @@
  
  ;; Starts with a #
  ;; TODO: allow whitespace before!
- (define (is-comment-line x)
+ (define (is-comment-line? x)
    (or (eq? (string-length x) 0)
        (string=? (substring x 0 1) "#")
        (string=? (substring x 0 1) ";")))
+ 
+ 
+ (define (is-blank-line? s)
+   (all (lambda (ci) (or (char=? ci #\space)
+                         (char=? ci #\tab)
+                         (char=? ci #\return)
+                         (char=? ci #\linefeed)))
+        (string->list s)))
  
  ;; Load a file of S-expressions, skipping comment lines
  ;; NOTE: this skips comment lines
@@ -222,7 +230,7 @@
    (let ((l (get-line in)))
      (if (eof-object? l)
          null
-         (if (is-comment-line l)
+         (if (is-comment-line? l)
              (load-file in)
              (cons (string->S-expression l) (load-file in))))))
  
@@ -231,7 +239,7 @@
    (let ((l (get-line in)))
      (if (eof-object? l)
          null
-         (if (is-comment-line l)
+         (if (is-comment-line? l)
              (load-file in)
              (let ((sl (string->S-expression l)))
                (if (exitearly sl)
