@@ -1,0 +1,19 @@
+unique one two three four five six seven eight
+
+# Define integers through the first few meanings
+two = (succ one) 
+three = (succ two) 
+four = (succ three) 
+five = (succ four) 
+six = (succ five) 
+seven = (succ six) 
+eight = (succ seven) 
+
+# And print these for everything we find:
+show (succ eight) 
+show (succ (succ eight)) 
+show (succ (succ (succ eight))) 
+
+# limit a little to help our search
+limit one 4
+

@@ -1,0 +1,16 @@
+# A fixed-point combinator that won't infinite loop
+# in normal-order evaluation. 
+
+#https://en.wikipedia.org/wiki/Fixed-point_combinator#Other_fixed-point_combinators
+# Z = λf.(λx.f (λv.((x x) v))) (λx.f (λv.((x x) v)))
+# cl says its this:
+# S (S (S (K S) (S (K K) I)) (K (S (S (K S) (S (K K) (S I I))) (K I)))) (S (S (K S) (S (K K) I)) (K (S (S (K S) (S (K K) (S I I))) (K I))))
+# which is probably too long to learn
+
+(%g (Z %g) %v) = (Z %g %v) 
+
+variable %g %v
+
+
+
+

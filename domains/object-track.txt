@@ -1,0 +1,20 @@
+# A working memory system capable of tracking just a few 
+# items, derived from combinator structures
+
+unique x xx xxx loss empty
+unique add sub
+
+x    = (add empty)
+xx   = (add x)
+xxx  = (add xx)
+loss = (add xxx)
+loss = (add loss)
+
+empty = (sub x)
+x     = (sub xx)
+xx    = (sub xxx)
+loss  = (sub empty)
+loss  = (sub loss)
+
+
+

@@ -1,0 +1,4 @@
+variable %f
+variable %x
+
+(%f %x) = (apply %f %x)
