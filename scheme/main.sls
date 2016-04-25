@@ -344,19 +344,6 @@
                  (backtrack return (cdr constraints) (cons (list lhs reduced-rhs) x) length-bound)
                  (return)))] ;;otherwise add and recurse
           
-          ; Push a constraint ->
-          [(and (null? undefined-lhs) 
-                (not (list? rhs))
-                (equal? constraint-type 'normal-form-equal?))
-           (let ((reduced-lhs (rebracket (reduce (substitute lhs x)))))
-             (if (and (check-unique rhs reduced-lhs x) ;; Enforce uniqueness constraint
-                      (is-valid? reduced-lhs)
-                      (not (uses-variable? reduced-lhs)) ;;; cannot push variable names
-                      (<= (length (flatten reduced-lhs)) (value-of rhs limits +inf.0))) ;; enforce depth bound
-                 (backtrack return (cdr constraints) (cons (list rhs reduced-lhs) x) length-bound)
-                 (return)))] ;;otherwise add and recurse
-          
-          
           ;; else we must search
           [ #t  (let* ((to-define (first (append undefined-rhs undefined-lhs))))
                   (stream-for-each (lambda (v) 
