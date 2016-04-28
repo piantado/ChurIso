@@ -316,10 +316,10 @@
              (undefined-rhs (filter definable (flatten rhs)))
              )
         
-       ; (displayn "\tc = " c)
-       ; (displayn "\tx = " x)
-       ; (displayn "\tundefined-rhs = " undefined-rhs)
-       ; (displayn "\tundefined-lhs = " undefined-lhs)
+       ;(displayn "\tc = " c)
+       ;(displayn "\tx = " x)
+       ;(displayn "\tundefined-rhs = " undefined-rhs)
+       ;(displayn "\tundefined-lhs = " undefined-lhs)
         
         (cond           
           ; if we have defined everything
@@ -349,6 +349,7 @@
           
           ;; else we must search
           [ #t  (let* ((to-define (first (append undefined-rhs undefined-lhs))))
+                  ;(displayn "HERE " to-define length-bound)
                   (stream-for-each (lambda (v) 
                                      ; Display if we should
                                      (if SHOW-BACKTRACKING
@@ -381,34 +382,36 @@
 
 
 (displaynerr "# Starting outer stream") (flush-output-port (current-output-port))
-(stream-for-each (lambda (v) 
-                   (let* ((c           (car constraints)); figure out what the first thing to define is 
-                          (lhs         (first c))
-                          (check-equal (equal? (second c) '=))
-                          (rhs         (third c))
-                          (definable   (lambda (a) (not (is-variable? a))))
-                          (undefined-lhs (filter definable (flatten lhs)))
-                          (undefined-rhs (filter definable (flatten rhs)))
-                          (to-define (first (append undefined-rhs undefined-lhs))))
-                     
-                     (if DISPLAY-INCREMENTAL
-                         (begin
-                           (displaynerr "# Trying " to-define " = " v "\t" (length (flatten v)) "\t found\t" found-count)
-                           (flush-output-port (current-error-port))))
-                     
-                     (call/cc (lambda (exit) 
-                                (backtrack exit 
-                                           constraints 
-                                           (cons (list to-define v) defines) 
-                                           (length (flatten v)) ; nothing can be longer than the first define in order to ensure efficient search
-                                           )))))
-                 
-                 (stream-filter (cond ((eqv? COMBINATOR-FILTER 'normal) is-normal-form?)
-                                      ((eqv? COMBINATOR-FILTER 'compressed) is-normal-form-or-shorter?)
-                                      ((eqv? COMBINATOR-FILTER 'none)  (lambda args #t)))
-                                (stream-skip PARALLEL-SKIP
-                                             (stream-drop PARALLEL-START  ;; handle parallel processing
-                                                          (enumerate-all MAX-LENGTH COMBINATOR-BASIS)))))
+(for length-bound in (range MAX-LENGTH)
+  (displaynerr "# Running with length bound " length-bound " found " found-count)
+  (stream-for-each (lambda (v) 
+                     (let* ((c           (car constraints)); figure out what the first thing to define is 
+                            (lhs         (first c))
+                            (check-equal (equal? (second c) '=))
+                            (rhs         (third c))
+                            (definable   (lambda (a) (not (is-variable? a))))
+                            (undefined-lhs (filter definable (flatten lhs)))
+                            (undefined-rhs (filter definable (flatten rhs)))
+                            (to-define (first (append undefined-rhs undefined-lhs))))
+                       
+                       (if DISPLAY-INCREMENTAL
+                           (begin
+                             (displaynerr "# Trying " to-define " = " v "\t" (length (flatten v)) "\t found\t" found-count)
+                             (flush-output-port (current-error-port))))
+                       
+                       (call/cc (lambda (exit) 
+                                  (backtrack exit 
+                                             constraints 
+                                             (cons (list to-define v) defines) 
+                                             length-bound ; iteratively deepeni
+                                             )))))
+                   
+                   (stream-filter (cond ((eqv? COMBINATOR-FILTER 'normal) is-normal-form?)
+                                        ((eqv? COMBINATOR-FILTER 'compressed) is-normal-form-or-shorter?)
+                                        ((eqv? COMBINATOR-FILTER 'none)  (lambda args #t)))
+                                  (stream-skip PARALLEL-SKIP
+                                               (stream-drop PARALLEL-START  ;; handle parallel processing
+                                                            (enumerate-all length-bound COMBINATOR-BASIS))))))
 
 (displaynerr "# Backtrack count: " GLOBAL-BACKTRACK-COUNT)
 (displaynerr "# Found count: " found-count " for " (cdr ARGS))
