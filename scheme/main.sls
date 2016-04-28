@@ -241,6 +241,8 @@
   (define lengths (map (lambda (y) (length (flatten (substitute y defined-combinators))))
                        (map second x)))
   
+  (define valid #t) ; Is this hypothesis one that "cheats" the evaluation by exiting early, etc?
+  
   ; get a count of running time for the constraints
   (define running-time 
     (let ((start-count (get-reduction-count)))
@@ -251,11 +253,23 @@
                (lhs-subbed      (substitute (substitute lhs x) defined-combinators))
                (rhs-subbed      (substitute (substitute rhs x) defined-combinators)))
           
-          ; and reduce lhs and rhs
-          (reduce lhs-subbed)
-          (reduce rhs-subbed)))
+          ; Reduce lhs and rhs. But note they can sometimes result in invalid 
+          ; reductions (if the subs are too long, for instance), resulting in low
+          ; running times. We need to catch these and penalize
+          (let ((a (reduce lhs-subbed))
+                (b (reduce rhs-subbed)))
+            (if (or (not (is-valid? a))
+                    (not (is-valid? b))
+                    (> (length* a) MAX-LENGTH)
+                    (> (length* b) MAX-LENGTH))
+                (set! valid #f)))
+          
+          ))
       
       (- (get-reduction-count) start-count)))
+  
+  ; penalize the ones that cheat the search
+  (set! running-time (+ (if valid 0 1000000000) running-time))
   
   ; Display the total length and running time
   (displayn "solution" found-count "\t" (apply max lengths) "\t"  (apply + lengths) "\t" running-time "\t" (* running-time (apply + lengths)) "\t" GLOBAL-BACKTRACK-COUNT)
