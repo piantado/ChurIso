@@ -72,13 +72,13 @@ c = (compose 1 c)
 
 
 # closure
-(a a) in (1 a b c)
-(a b) in (1 a b c)
-(a c) in (1 a b c)
-(b a) in (1 a b c)
-(b b) in (1 a b c)
-(b c) in (1 a b c)
-(c a) in (1 a b c)
-(c b) in (1 a b c)
-(c c) in (1 a b c)
+(compose a a) in (1 a b c)
+(compose a b) in (1 a b c)
+(compose a c) in (1 a b c)
+(compose b a) in (1 a b c)
+(compose b b) in (1 a b c)
+(compose b c) in (1 a b c)
+(compose c a) in (1 a b c)
+(compose c b) in (1 a b c)
+(compose c c) in (1 a b c)
 

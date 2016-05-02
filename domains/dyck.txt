@@ -3,19 +3,23 @@ unique l r
 
 o1  = (l start)
 accept = (r o1)
-o2  = (l o1)
 
+# This is the key that permits us to form strings like ()()()
+o1 = (l accept) 
 
-o1  = (r o2)
-o3  = (l o2)
+o2 = (l o1)
+o3 = (l o2)
+o4 = (l o3)
+o5 = (l o4)
 
-o2  = (r o3)
-o4  = (l o3)
+o4 = (r o5)
+o3 = (r o4)
+o2 = (r o3)
+o1 = (r o2)
 
 reject = (r accept)
 reject = (l reject)
 reject = (r reject)
-
 
 show (r (l (r (l start))))
 show (r (l (r (l (r (l start))))))

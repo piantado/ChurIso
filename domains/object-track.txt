@@ -4,17 +4,20 @@
 unique x xx xxx loss empty
 unique add sub
 
+# can add and remove from the empty set
 x    = (add empty)
 xx   = (add x)
 xxx  = (add xx)
-loss = (add xxx)
-loss = (add loss)
+fail = (add xxx)
 
 empty = (sub x)
 x     = (sub xx)
 xx    = (sub xxx)
-loss  = (sub empty)
-loss  = (sub loss)
+
+# but if you exceed the bounds, you fail
+# and then updates don't matter
+fail = (add fail)
+fail = (sub fail)
 
 
 

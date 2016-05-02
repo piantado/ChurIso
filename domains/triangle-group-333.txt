@@ -3,82 +3,81 @@ unique a b c 1
 #https://en.wikipedia.org/wiki/Triangle_group
 
 # Inverse
-1 = (a a)
-1 = (b b)
-1 = (c c)
+1 = (compose a a)
+1 = (compose b b)
+1 = (compose c c)
 
 # Identity
-a = (1 a)
-b = (1 b)
-c = (1 c)
+a = (compose 1 a)
+b = (compose 1 b)
+c = (compose 1 c)
 
 # 3 3 3 case
-1 = (b (a (b (a (b a)))))
-1 = (b (c (b (c (b c)))))
-1 = (c (a (c (a (c a)))))
+1 = (compose b (compose a (compose b (compose a (compose b a)))))
+1 = (compose b (compose c (compose b (compose c (compose b c)))))
+1 = (compose c (compose a (compose c (compose a (compose c a)))))
 
 
 # Asociativity axioms
 
-(a (a a)) = ((a a) a)
-(a (a b)) = ((a a) b)
-(a (a c)) = ((a a) c)
-(a (a 1)) = ((a a) 1)
+(compose a (compose a a)) = (compose (compose a a) a)
+(compose a (compose a b)) = (compose (compose a a) b)
+(compose a (compose a c)) = (compose (compose a a) c)
+(compose a (compose a 1)) = (compose (compose a a) 1)
 
-(a (b a)) = ((a b) a)
-(a (b b)) = ((a b) b)
-(a (b c)) = ((a b) c)
-(a (b 1)) = ((a b) 1)
+(compose a (compose b a)) = (compose (compose a b) a)
+(compose a (compose b b)) = (compose (compose a b) b)
+(compose a (compose b c)) = (compose (compose a b) c)
+(compose a (compose b 1)) = (compose (compose a b) 1)
 
-(a (c a)) = ((a c) a)
-(a (c b)) = ((a c) b)
-(a (c c)) = ((a c) c)
-(a (c 1)) = ((a c) 1)
-
-
-
-(b (a a)) = ((b a) a)
-(b (a b)) = ((b a) b)
-(b (a c)) = ((b a) c)
-(b (a 1)) = ((b a) 1)
-
-(b (b a)) = ((b b) a)
-(b (b b)) = ((b b) b)
-(b (b c)) = ((b b) c)
-(b (b 1)) = ((b b) 1)
-
-(b (c a)) = ((b c) a)
-(b (c b)) = ((b c) b)
-(b (c c)) = ((b c) c)
-(b (c 1)) = ((b c) 1)
+(compose a (compose c a)) = (compose (compose a c) a)
+(compose a (compose c b)) = (compose (compose a c) b)
+(compose a (compose c c)) = (compose (compose a c) c)
+(compose a (compose c 1)) = (compose (compose a c) 1)
 
 
 
-(c (a a)) = ((c a) a)
-(c (a b)) = ((c a) b)
-(c (a c)) = ((c a) c)
-(c (a 1)) = ((c a) 1)
+(compose b (compose a a)) = (compose (compose b a) a)
+(compose b (compose a b)) = (compose (compose b a) b)
+(compose b (compose a c)) = (compose (compose b a) c)
+(compose b (compose a 1)) = (compose (compose b a) 1)
 
-(c (b a)) = ((c b) a)
-(c (b b)) = ((c b) b)
-(c (b c)) = ((c b) c)
-(c (b 1)) = ((c b) 1)
+(compose b (compose b a)) = (compose (compose b b) a)
+(compose b (compose b b)) = (compose (compose b b) b)
+(compose b (compose b c)) = (compose (compose b b) c)
+(compose b (compose b 1)) = (compose (compose b b) 1)
 
-(c (c a)) = ((c c) a)
-(c (c b)) = ((c c) b)
-(c (c c)) = ((c c) c)
-(c (c 1)) = ((c c) 1)
+(compose b (compose c a)) = (compose (compose b c) a)
+(compose b (compose c b)) = (compose (compose b c) b)
+(compose b (compose c c)) = (compose (compose b c) c)
+(compose b (compose c 1)) = (compose (compose b c) 1)
 
+
+
+(compose c (compose a a)) = (compose (compose c a) a)
+(compose c (compose a b)) = (compose (compose c a) b)
+(compose c (compose a c)) = (compose (compose c a) c)
+(compose c (compose a 1)) = (compose (compose c a) 1)
+
+(compose c (compose b a)) = (compose (compose c b) a)
+(compose c (compose b b)) = (compose (compose c b) b)
+(compose c (compose b c)) = (compose (compose c b) c)
+(compose c (compose b 1)) = (compose (compose c b) 1)
+
+(compose c (compose c a)) = (compose (compose c c) a)
+(compose c (compose c b)) = (compose (compose c c) b)
+(compose c (compose c c)) = (compose (compose c c) c)
+(compose c (compose c 1)) = (compose (compose c c) 1)
 
 
 # closure
-(a a) in (1 a b c)
-(a b) in (1 a b c)
-(a c) in (1 a b c)
-(b a) in (1 a b c)
-(b b) in (1 a b c)
-(b c) in (1 a b c)
-(c a) in (1 a b c)
-(c b) in (1 a b c)
-(c c) in (1 a b c)
+(compose a a) in (1 a b c)
+(compose a b) in (1 a b c)
+(compose a c) in (1 a b c)
+(compose b a) in (1 a b c)
+(compose b b) in (1 a b c)
+(compose b c) in (1 a b c)
+(compose c a) in (1 a b c)
+(compose c b) in (1 a b c)
+(compose c c) in (1 a b c)
 

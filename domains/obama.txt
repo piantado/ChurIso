@@ -1,7 +1,7 @@
 unique barak sasha malia michelle
 unique father mother sister husband wife
 
-# enter in some relations
+
 barak = (father sasha)
 barak = (father malia)
 

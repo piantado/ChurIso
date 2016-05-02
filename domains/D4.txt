@@ -1,41 +1,41 @@
-# Group of symmetries of a rectangle (e.g. F)
+# Group of symmetries of a rectangle (compose e.g. F)
 #https://en.wikipedia.org/wiki/Dihedral_group
 #https://en.wikipedia.org/wiki/Examples_of_groups#dihedral_group_of_order_8
 
 unique a b 1
 
 # Inverse
-1 = (a a a a)
-1 = (b b)
+1 = (compose a a a a)
+1 = (compose b b)
 
 # Identity
-a = (1 a)
-b = (1 b)
+a = (compose 1 a)
+b = (compose 1 b)
 
 # Generators
-1 = (a (b (a b)))
+1 = (compose a (compose b (compose a b)))
 
 # Asociativity axioms
-(a (a a)) = ((a a) a)
-(a (a b)) = ((a a) b)
-(a (a 1)) = ((a a) 1)
+(compose a (compose a a)) = (compose (compose a a) a)
+(compose a (compose a b)) = (compose (compose a a) b)
+(compose a (compose a 1)) = (compose (compose a a) 1)
 
-(a (b a)) = ((a b) a)
-(a (b b)) = ((a b) b)
-(a (b 1)) = ((a b) 1)
+(compose a (compose b a)) = (compose (compose a b) a)
+(compose a (compose b b)) = (compose (compose a b) b)
+(compose a (compose b 1)) = (compose (compose a b) 1)
 
 
-(b (a a)) = ((b a) a)
-(b (a b)) = ((b a) b)
-(b (a 1)) = ((b a) 1)
+(compose b (compose a a)) = (compose (compose b a) a)
+(compose b (compose a b)) = (compose (compose b a) b)
+(compose b (compose a 1)) = (compose (compose b a) 1)
 
-(b (b a)) = ((b b) a)
-(b (b b)) = ((b b) b)
-(b (b 1)) = ((b b) 1)
+(compose b (compose b a)) = (compose (compose b b) a)
+(compose b (compose b b)) = (compose (compose b b) b)
+(compose b (compose b 1)) = (compose (compose b b) 1)
 
 
 # closure
-(a a) in (1 a b)
-(a b) in (1 a b)
-(b a) in (1 a b)
-(b b) in (1 a b)
+(compose a a) in (1 a b)
+(compose a b) in (1 a b)
+(compose b a) in (1 a b)
+(compose b b) in (1 a b)

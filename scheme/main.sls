@@ -142,6 +142,61 @@
   (and (not (equal? x NON-HALT))
        (not (equal? x '()))))
 
+
+; take a set of constraints and compute the complexity
+; of our search. It will be O(N^k), and this returns k
+; This gets used by a constraint-order-randomizer to pick
+; a good order to search in
+(define (compute-complexity constraints x)
+  (if (null? constraints)
+      0
+      (let ((c           (car constraints))
+            (constraint-type (first c))
+            (lhs         (second c))
+            (rhs         (third c))
+            (in-x?       (lambda (a) (assoc a x)))
+            (definable   (lambda (a) (and (not (in-x? a)) ; ;what can we define? Must not be defined (not in x) and not be a variable
+                                          (not (is-variable? a)))))
+            (undefined-lhs (filter definable (flatten lhs)))
+            (undefined-rhs (filter definable (flatten rhs)))
+            )
+        (cond [(or  (and (null? undefined-lhs) (null? undefined-rhs)) ; everything defined 
+                    (and (null? undefined-rhs)                        ; push constraint <- 
+                         (not (list? lhs)) 
+                         (equal? constraint-type 'normal-form-equal?))
+                    (and (null? undefined-lhs)                        ; puch constraint ->
+                         (not (list? rhs))
+                         (equal? constraint-type 'normal-form-equal?)))   
+               (compute-complexity (cdr constraints x))]
+              [ #t (+ 1 (compute-complexity constraints (cons (list (first (append undefined-rhs undefined-lhs)) 'dummy) x)))] ; we have to search
+              ; ))))
+              ; TODO: ADD PUSH -> 
+
+
+              
+              
+              
+              
+              
+              
+              
+              
+              
+              
+              
+              
+              
+              
+              
+              
+              
+              
+              
+              
+              
+              
+              
+
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; Some helpful control flow, streams
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -361,6 +416,20 @@
                  (backtrack return (cdr constraints) (cons (list lhs reduced-rhs) x) length-bound)
                  (return)))] ;;otherwise add and recurse
           
+          
+          ; Push a constraint ->
+          [(and (null? undefined-lhs) 
+                (not (list? rhs))
+                (equal? constraint-type 'normal-form-equal?))
+           (let ((reduced-lhs (rebracket (reduce (substitute lhs x)))))
+             ;(displayn "PUSHING " lhs reduced-rhs)
+             (if (and (check-unique lhs reduced-lhs x) ;; Enforce uniqueness constraint
+                      (is-valid? reduced-lhs)
+                      (not (uses-variable? reduced-lhs)) ;; cannot push variable names
+                      (<= (length (flatten reduced-lhs)) (value-of rhs limits +inf.0))) ;; enforce depth bound
+                 (backtrack return (cdr constraints) (cons (list rhs reduced-lhs) x) length-bound)
+                 (return)))] ;;otherwise add and recurse
+          
           ;; else we must search
           [ #t  (let* ((to-define (first (append undefined-rhs undefined-lhs))))
                   ;(displayn "HERE " to-define length-bound)
@@ -410,7 +479,7 @@
                        
                        (if DISPLAY-INCREMENTAL
                            (begin
-                             (displaynerr "# Trying " to-define " = " v "\t" (length (flatten v)) "\t found\t" found-count)
+                             (displaynerr "#\t Trying " to-define " = " v "\t" (length (flatten v)) "\t found\t" found-count)
                              (flush-output-port (current-error-port))))
                        
                        (call/cc (lambda (exit) 
