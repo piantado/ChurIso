@@ -39,6 +39,7 @@
 (define MAX-LENGTH 20) ; overall total max for use in search
 (define EOR #\nul) ; The end of record. Using #\nul will let you sort -z with multiline output
 (define MAX-FIND 10000)
+(define N-CONSTRAINT-OPTIMIZE 10000) ; how many random orders do we try to find the best cosntraint order?
 (define PREFIX-DEPTH 25) ; when we say that prefixes must be equal, how deep do they have to be to?
 (define COMBINATOR-FILTER 'normal) ; normal (must be normal form), compressed (non-normal forms are okay as long as they are shorter than the normal form), or none (all combinators)
 
@@ -150,52 +151,28 @@
 (define (compute-complexity constraints x)
   (if (null? constraints)
       0
-      (let ((c           (car constraints))
-            (constraint-type (first c))
-            (lhs         (second c))
-            (rhs         (third c))
-            (in-x?       (lambda (a) (assoc a x)))
-            (definable   (lambda (a) (and (not (in-x? a)) ; ;what can we define? Must not be defined (not in x) and not be a variable
-                                          (not (is-variable? a)))))
-            (undefined-lhs (filter definable (flatten lhs)))
-            (undefined-rhs (filter definable (flatten rhs)))
-            )
-        (cond [(or  (and (null? undefined-lhs) (null? undefined-rhs)) ; everything defined 
-                    (and (null? undefined-rhs)                        ; push constraint <- 
-                         (not (list? lhs)) 
-                         (equal? constraint-type 'normal-form-equal?))
-                    (and (null? undefined-lhs)                        ; puch constraint ->
-                         (not (list? rhs))
-                         (equal? constraint-type 'normal-form-equal?)))   
-               (compute-complexity (cdr constraints x))]
+      (let* ((c          (car constraints))
+             (constraint-type (first c))
+             (lhs         (second c))
+             (rhs         (third c))
+             (in-x?       (lambda (a) (assoc a x)))
+             (definable   (lambda (a) (and (not (in-x? a)) ; ;what can we define? Must not be defined (not in x) and not be a variable
+                                           (not (is-variable? a)))))
+             (undefined-lhs (filter definable (flatten lhs)))
+             (undefined-rhs (filter definable (flatten rhs)))
+             )
+        (cond [(and (null? undefined-lhs) (null? undefined-rhs)) ; everything defined 
+               (compute-complexity (cdr constraints) x)]
+              [(and (null? undefined-rhs)                        ; push constraint <- 
+                    (not (list? lhs)) 
+                    (equal? constraint-type 'normal-form-equal?))
+               (compute-complexity (cdr constraints) (cons (list lhs 'dummy) x))]
+              [(and (null? undefined-lhs)                        ; puch constraint ->
+                    (not (list? rhs))
+                    (equal? constraint-type 'normal-form-equal?))
+               (compute-complexity (cdr constraints) (cons (list rhs 'dummy) x))]
               [ #t (+ 1 (compute-complexity constraints (cons (list (first (append undefined-rhs undefined-lhs)) 'dummy) x)))] ; we have to search
-              ; ))))
-              ; TODO: ADD PUSH -> 
-
-
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
+              ))))
 
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; Some helpful control flow, streams
@@ -458,12 +435,37 @@
 
 
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-; And run it!
-; Here we manage the outermost constraint so we can vary that across
-; parallel threads
+; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; Main running code
+; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
+(displayn "# Optimizing constraint order")
+(define best-order constraints)
+(define best-k  (compute-complexity constraints defines))
+(displayn "# Given order is " best-k)
+(for xx in (range N-CONSTRAINT-OPTIMIZE)
+  
+  (set! constraints (shuffle constraints))
+
+  (let ((k (compute-complexity constraints defines)))
+    (if (< k best-k)
+        (begin
+          (set! best-order constraints)
+          (set! best-k k))))
+  )
+(displayn "# Best order is: " best-k)
+(set! constraints best-order)
+  
+
+; Now the actual search
+; Here we manage the outermost constraint so we can vary that across
+; parallel threads     
 (displaynerr "# Starting outer stream") (flush-output-port (current-output-port))
 (for length-bound in (range MAX-LENGTH)
   (displaynerr "# Running with length bound " length-bound " found " found-count)

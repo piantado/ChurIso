@@ -4,7 +4,7 @@
          flatten append apply-append unlist-singleton str-split is-comment-line? is-blank-line? load-file has-value value-of range all any
          string->S-expression drop assert-equal repeat string-repeat mydisplay last length* shuffle
          )
- (import (rnrs) ) ;  (rnrs io (6)) 
+ (import (rnrs) (vicare) ) ;  (rnrs io (6)) 
  
  ;; #####################################################################################
  ;; #####################################################################################
@@ -65,10 +65,8 @@
     (let* ((r (random n)) (t (vector-ref v r)))
       (vector-set! v r (vector-ref v (- n 1)))
       (vector-set! v (- n 1) t))))
-
-              
-               
- ; (define (flip) (= (random 2) 1))
+      
+ (define (flip) (= (random 2) 1))
  
  ; (define (append . lsts)
  ;   (cond
