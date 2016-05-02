@@ -2,7 +2,7 @@
  (stp-lib)
  (export displayn displaynerr null first second third fourth fifth sixth seventh member?
          flatten append apply-append unlist-singleton str-split is-comment-line? is-blank-line? load-file has-value value-of range all any
-         string->S-expression drop assert-equal repeat string-repeat mydisplay last length*
+         string->S-expression drop assert-equal repeat string-repeat mydisplay last length* shuffle
          )
  (import (rnrs) ) ;  (rnrs io (6)) 
  
@@ -58,8 +58,16 @@
          ((not (pair? x)) (list x))
          (else (append (flatten (car x))
                        (flatten (cdr x))))))
- 
- 
+; http://lists.racket-lang.org/users/archive/2009-August/034974.html
+(define (shuffle x)
+  (do ((v (list->vector x)) (n (length x) (- n 1)))
+      ((zero? n) (vector->list v))
+    (let* ((r (random n)) (t (vector-ref v r)))
+      (vector-set! v r (vector-ref v (- n 1)))
+      (vector-set! v (- n 1) t))))
+
+              
+               
  ; (define (flip) (= (random 2) 1))
  
  ; (define (append . lsts)
