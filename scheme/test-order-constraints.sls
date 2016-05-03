@@ -8,6 +8,7 @@
  (parser)
  (order-constraints))
 
+
 (define all-input (get-input "../domains/boolean.txt"))
 
 (define constraints (list-constraints all-input))
@@ -32,11 +33,16 @@
 
 (displaynerr "\nge graph\n")
 
-(displaynerr (first ge-graph))
-(map displaynerr (second ge-graph))
+(displaynerr ge-graph)
 
 (displaynerr "\nvertex covers\n")
 (map displaynerr (map (lambda (x) (make-vertex-cover ge-graph)) (range 15)))
 
 (displaynerr "\nbest vertex covers\n")
 (map displaynerr (choose-best-of-n-covers 15 ge-graph))
+
+(displaynerr "\nall vertex covers\n")
+(map displaynerr (all-vertex-covers ge-graph))
+
+(displaynerr "\nbest of all vertex covers\n")
+(map displaynerr (choose-best-of-all-covers ge-graph))

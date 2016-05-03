@@ -3,7 +3,8 @@
 (library
  (order-constraints)
  (export constraint? list-constraints list-symbols  make-dependency-graph
-         adjacency-to-ge-graph make-vertex-cover choose-best-of-n-covers)
+         adjacency-to-ge-graph make-vertex-cover choose-best-of-n-covers
+         all-vertex-covers choose-best-of-all-covers)
  ;; (export find-vertex-cover reorder-constraints)
  (import (rnrs) (stp-lib) (parser))
 
@@ -87,5 +88,36 @@
                                                     (equal? (cdr x) u)
                                                     (equal? (cdr x) v)))) es)))
          (make-vertex-cover-helper ns new-es new-c))))
+
+ (define (all-vertex-covers g)
+   (all-vertex-covers-helper '() (car g) (car (cdr g))))
+
+ (define (all-vertex-covers-helper c ns es)
+   (if (null? ns)
+       (if (null? es)
+           (list c)
+           '())
+       (let* ((u (car ns))
+              (new-c (cons u c))
+              (new-es (filter (lambda (e) (not (or (equal? (car e) u)
+                                                   (equal? (cdr e) u)))) es)))
+         (append (all-vertex-covers-helper c (cdr ns) es)
+                 (all-vertex-covers-helper new-c (cdr ns) new-es)))))
+
+ (define (choose-best-of-all-covers g)
+   (let* ((nodes (car g))
+          (covered (choose-best-of-all-covers-helper
+                       nodes
+                       (all-vertex-covers g)))
+          (uncovered (set-difference nodes covered)))
+   (list covered uncovered)))
+
+ (define (choose-best-of-all-covers-helper c cs)
+   (if (null? cs)
+       c
+       (if (< (length (car cs)) (length c))
+           (choose-best-of-all-covers-helper (car cs) (cdr cs))
+           (choose-best-of-all-covers-helper c (cdr cs)))))
+
 
  )
