@@ -3,7 +3,7 @@
 ; are interpreted by main.sls
 (library 
  (parser)
- (export load-and-parse)
+ (export load-and-parse get-input)
  (import (rnrs)  (stp-lib)  (vicare) (rnrs eval (6)) (grammar))
  
  ; This environment is jsut that of "grammar", which defines
@@ -23,9 +23,11 @@
              (cons (eval (string->S-expression (string-append "(%churiso-parse% " l ")")) ; add parens and parse 
                          PARSER-ENVIRONMENT)
                    (load-and-parse in))))))
+
+ (define (get-input file) ; a convenience wrapper
+   (load-and-parse (open-input-file file)))
  
- 
- ;(define all-input (load-and-parse (open-input-file "tmp.txt")))
+ ;(define all-input (get-input "tmp.txt")))
  ;(displaynerr all-input)
  
  )

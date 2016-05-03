@@ -3,6 +3,7 @@
  (export displayn displaynerr null first second third fourth fifth sixth seventh member?
          flatten append apply-append unlist-singleton str-split is-comment-line? is-blank-line? load-file has-value value-of range all any
          string->S-expression drop assert-equal repeat string-repeat mydisplay last length* shuffle
+         contains? uniquify
          )
  (import (rnrs) (vicare) ) ;  (rnrs io (6)) 
  
@@ -146,6 +147,16 @@
    (if (= n 0)
        x
        (cons x (repeat x (- n 1)))))
+
+ (define (contains? xs q)
+   (not (null? (filter (lambda (x) (equal? x q)) xs))))
+
+ (define (uniquify xs)
+   (fold-right (lambda (x acc) (if (contains? acc x)
+                                   acc
+                                   (cons x acc)))
+               '()
+               xs))
 
   (define (string-repeat x n)
    (if (= n 0)
