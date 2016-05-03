@@ -16,6 +16,8 @@
 
 (define dependency-graph (make-dependency-graph all-input))
 
+(define ge-graph (adjacency-to-ge-graph dependency-graph))
+
 (displaynerr "\ninput\n")
 (map displaynerr all-input)
 
@@ -28,3 +30,13 @@
 (displaynerr "\ndependency graph\n")
 (map displaynerr dependency-graph)
 
+(displaynerr "\nge graph\n")
+
+(displaynerr (first ge-graph))
+(map displaynerr (second ge-graph))
+
+(displaynerr "\nvertex covers\n")
+(map displaynerr (map (lambda (x) (make-vertex-cover ge-graph)) (range 15)))
+
+(displaynerr "\nbest vertex covers\n")
+(map displaynerr (choose-best-of-n-covers 15 ge-graph))

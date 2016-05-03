@@ -3,7 +3,7 @@
  (export displayn displaynerr null first second third fourth fifth sixth seventh member?
          flatten append apply-append unlist-singleton str-split is-comment-line? is-blank-line? load-file has-value value-of range all any
          string->S-expression drop assert-equal repeat string-repeat mydisplay last length* shuffle
-         contains? uniquify
+         contains? uniquify nth random-element set-difference
          )
  (import (rnrs) (vicare) ) ;  (rnrs io (6)) 
  
@@ -43,7 +43,17 @@
  (define (fifth x)  (cadddr (cdr x)))
  (define (sixth x)  (cadddr (cddr x)))
  (define (seventh x)  (cadddr (cdddr x)))
- 
+ (define (nth n xs)
+   (if (= n 0)
+       (car xs)
+       (nth (- n 1) (cdr xs))))
+
+ (define (random-element xs)
+   (nth (random (length xs)) xs))
+
+ (define (set-difference xs ys)
+   (fold-right (lambda (y acc) (remove y acc)) xs ys))
+
  (define member? member)
 
   
