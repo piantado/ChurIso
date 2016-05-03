@@ -5,7 +5,7 @@
          string->S-expression drop assert-equal repeat string-repeat mydisplay last length* shuffle
          contains? uniquify nth random-element set-difference
          )
- (import (rnrs) (vicare) ) ;  (rnrs io (6)) 
+ (import (rnrs) (vicare)) ;  (rnrs io (6)) 
  
  ;; #####################################################################################
  ;; #####################################################################################
