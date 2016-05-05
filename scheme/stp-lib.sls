@@ -3,7 +3,8 @@
  (export displayn displaynerr null first second third fourth fifth sixth seventh member?
          flatten append apply-append unlist-singleton str-split is-comment-line? is-blank-line? load-file has-value value-of range all any
          string->S-expression drop assert-equal repeat string-repeat mydisplay last length* shuffle
-         contains? uniquify nth random-element set-difference
+         uniquify nth random-element set-difference minimum maximum set-symmetric-difference
+         set-union set-intersection best-by-score
          )
  (import (rnrs) (vicare)) ;  (rnrs io (6)) 
  
@@ -51,8 +52,25 @@
  (define (random-element xs)
    (nth (random (length xs)) xs))
 
+ (define (set-union a b) (uniquify (append a b)))
+
+ (define (set-intersection a b)
+   (filter (lambda (x) (member? x a)) b))
+
  (define (set-difference xs ys)
    (fold-right (lambda (y acc) (remove y acc)) xs ys))
+
+ (define (set-symmetric-difference a b)
+   (set-union (set-difference a b)
+              (set-difference b a)))
+
+ (define (best-by-score xs scores)
+   (let* ((best-score (minimum scores))
+          (zipped (map cons scores xs))
+          (is-best? (lambda (x) (= (car x) best-score)))
+          (best-zipped (filter is-best? zipped))
+          (best-xs (map cdr best-zipped)))
+     best-xs))
 
  (define member? member)
 
@@ -158,15 +176,15 @@
        x
        (cons x (repeat x (- n 1)))))
 
- (define (contains? xs q)
-   (not (null? (filter (lambda (x) (equal? x q)) xs))))
-
  (define (uniquify xs)
-   (fold-right (lambda (x acc) (if (contains? acc x)
+   (fold-right (lambda (x acc) (if (member? x acc)
                                    acc
                                    (cons x acc)))
                '()
                xs))
+
+ (define (minimum xs) (fold-right min (car xs) (cdr xs)))
+ (define (maximum xs) (fold-right max (car xs) (cdr xs)))
 
   (define (string-repeat x n)
    (if (= n 0)
