@@ -14,7 +14,7 @@
 ;; #####################################################################################
 
 (import (rnrs) 
-        (combinators) (stp-lib) (evaluation) (parser)
+        (combinators) (stp-lib) (evaluation) (parser) (order-constraints) ; (randomize-constraints) 
         (srfi :41); streams
         )
 
@@ -39,7 +39,6 @@
 (define MAX-LENGTH 20) ; overall total max for use in search
 (define EOR #\nul) ; The end of record. Using #\nul will let you sort -z with multiline output
 (define MAX-FIND 10000)
-(define N-CONSTRAINT-OPTIMIZE 10000) ; how many random orders do we try to find the best cosntraint order?
 (define PREFIX-DEPTH 25) ; when we say that prefixes must be equal, how deep do they have to be to?
 (define COMBINATOR-FILTER 'normal) ; normal (must be normal form), compressed (non-normal forms are okay as long as they are shorter than the normal form), or none (all combinators)
 
@@ -82,11 +81,6 @@
                               (C (S (K (S (K (S S (K K))) K)) S))
                               (B (S (K S) K) )
                               ))
-
-
-; Sort so that the defines = are always first, since these provide the strongest constraints
-(set! constraints (append (filter (lambda (ci) (equal? (second ci) '=)) constraints)
-                          (filter (lambda (ci) (not (equal? (second ci) '=))) constraints)))
 
 (displaynerr "# Constraints: " constraints)
 (displaynerr "# Uniques " uniques)
@@ -446,23 +440,16 @@
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-(displayn "# Optimizing constraint order")
-(define best-order constraints)
-(define best-k  (compute-complexity constraints defines))
-(displayn "# Given order is " best-k)
-(for xx in (range N-CONSTRAINT-OPTIMIZE)
-  
-  (set! constraints (shuffle constraints))
+(displayn "# Optimizing constraint order. Given order is " (compute-complexity constraints defines))
 
-  (let ((k (compute-complexity constraints defines)))
-    (if (< k best-k)
-        (begin
-          (set! best-order constraints)
-          (set! best-k k))))
-  )
-(displayn "# Best order is: " best-k)
-(set! constraints best-order)
-
+;(define symbols (list-symbols (map cdr constraints)))
+;(define graph (make-graph all-input))
+;(define best-of-all-covers (choose-best-cover (make-all-vertex-covers graph)))
+;(displayn (order-constraints (map cdr constraints)
+;                                     '()
+;                                     best-of-all-covers))
+(set! constraints (random-optimize-constraints compute-complexity constraints defines)) ; if we want to try random
+(displayn "# Best order is: " (compute-complexity constraints defines))
 
 ; Now the actual search
 ; Here we manage the outermost constraint so we can vary that across

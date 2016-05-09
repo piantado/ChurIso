@@ -13,7 +13,7 @@
 
 (library (order-constraints)
   (export make-graph make-vertex-cover make-n-vertex-covers
-          make-all-vertex-covers choose-best-cover order-constraints
+          make-all-vertex-covers choose-best-cover order-constraints list-symbols
           test-order-constraints)
   (import (rnrs) (stp-lib))
 
