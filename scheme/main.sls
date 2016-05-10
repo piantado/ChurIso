@@ -14,7 +14,7 @@
 ;; #####################################################################################
 
 (import (rnrs) 
-        (combinators) (stp-lib) (evaluation) (parser) (order-constraints) ; (randomize-constraints) 
+        (combinators) (stp-lib) (evaluation) (parser) (order-constraints) (randomize-constraints) 
         (srfi :41); streams
         )
 
@@ -51,6 +51,8 @@
 (define DISPLAY-INCREMENTAL (or (member "--incremental" ARGS)
                                 (member "--verbose" ARGS))) ; display the outermost search to show progress?
 (define SHOW-BACKTRACKING   (member "--verbose" ARGS)) ;; show all stages of the backtracking search?
+
+(define CONSTRAINT-SORT 'random)
 
 ;; Counters
 (define GLOBAL-BACKTRACK-COUNT 0) ;; how many times have we called backtrack?
@@ -442,13 +444,25 @@
 
 (displayn "# Optimizing constraint order. Given order is " (compute-complexity constraints defines))
 
-;(define symbols (list-symbols (map cdr constraints)))
-;(define graph (make-graph all-input))
-;(define best-of-all-covers (choose-best-cover (make-all-vertex-covers graph)))
-;(displayn (order-constraints (map cdr constraints)
-;                                     '()
-;                                     best-of-all-covers))
-(set! constraints (random-optimize-constraints compute-complexity constraints defines)) ; if we want to try random
+(cond
+ [(equal? CONSTRAINT-SORT 'random) ; if we use random solution
+   (begin
+     (displayn "# Using random sort")
+     (set! constraints
+           (random-optimize-constraints compute-complexity
+                                        constraints
+                                        defines)))]
+  [(equal? CONSTRAINT-SORT 'vertex-cover) ; if we use vertex-cover solution
+   (begin
+     (displayn "# Using vertex-cover sort")
+     (let* ((symbols (list-symbols (map cdr constraints)))
+            (graph (make-graph all-input))
+            (best-of-all-covers (choose-best-cover (make-all-vertex-covers graph)))
+            (good-ordering (order-constraints constraints
+                                              defines
+                                              best-of-all-covers)))
+       (set! constraints good-ordering)))])
+
 (displayn "# Best order is: " (compute-complexity constraints defines))
 
 ; Now the actual search
