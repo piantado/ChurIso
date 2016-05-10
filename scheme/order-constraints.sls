@@ -107,10 +107,11 @@
            (map compute-new-defs constraints))))
 
   (define (best-by-violations constraints uncovered)
-    (best-by-score constraints (compute-violations constraints uncovered)))
+    (best-by-score constraints (compute-violations (map cdr constraints)
+                                                   uncovered)))
 
   (define (best-by-costs constraints defines)
-    (best-by-score constraints (compute-costs constraints defines)))
+    (best-by-score constraints (compute-costs (map cdr constraints) defines)))
 
   (define (next-constraint constraints defines cover)
     (list (random-element (best-by-costs (best-by-violations constraints
@@ -140,9 +141,8 @@
       (define best-of-some-covers (choose-best-cover some-covers))
       (define all-covers (make-all-vertex-covers graph))
       (define best-of-all-covers (choose-best-cover all-covers))
-      (define ordering (order-constraints (map cdr constraints)
-                                          '()
-                                          best-of-all-covers))
+      ;; don't use '() in production code, but defines instead
+      (define ordering (order-constraints constraints '() best-of-all-covers))
 
     (displaynerr "\n#### input ############################################\n")
     (map displaynerr all-input)
