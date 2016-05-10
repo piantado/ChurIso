@@ -52,7 +52,7 @@
                                 (member "--verbose" ARGS))) ; display the outermost search to show progress?
 (define SHOW-BACKTRACKING   (member "--verbose" ARGS)) ;; show all stages of the backtracking search?
 
-(define CONSTRAINT-SORT 'random)
+(define CONSTRAINT-SORT 'vertex-cover) ; random or vertex-cover
 
 ;; Counters
 (define GLOBAL-BACKTRACK-COUNT 0) ;; how many times have we called backtrack?
