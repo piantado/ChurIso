@@ -203,6 +203,7 @@
                  (all (lambda (k) (not (are-combinators-equal? (value-of k x 'NA-VALUE) val ))) l) ;; look up each element of l and check that it's value in x is not val
                  #t)
              (check-unique-inner tok val (cdr uniques) x)))))
+
 (define (check-unique tok val x)
   (check-unique-inner tok val uniques x))
 

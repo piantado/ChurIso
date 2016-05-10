@@ -3,7 +3,7 @@
  (export displayn displaynerr null first second third fourth fifth sixth seventh member?
          flatten append apply-append unlist-singleton str-split is-comment-line? is-blank-line? load-file has-value value-of range all any
          string->S-expression drop assert-equal repeat string-repeat mydisplay last length* shuffle
-         uniquify nth random-element set-difference minimum maximum set-symmetric-difference
+         uniquify nth random-element set-difference minimum maximum set-symmetric-difference range0
          set-union set-intersection best-by-score
          )
  (import (rnrs) (vicare)) ;  (rnrs io (6)) 
@@ -170,6 +170,12 @@
    (if (= n 0)
        null
        (append (range (- n 1)) (list n))))
+ 
+ ; 0 1 2 3 .. (n-1)
+  (define (range0 n)
+   (if (= n 1)
+       '(0)
+       (append (range0 (- n 1)) (list (- n 1)))))
  
  (define (repeat x n)
    (if (= n 0)
