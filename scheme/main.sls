@@ -41,7 +41,7 @@
 (define MAX-FIND 10000)
 (define PREFIX-DEPTH 25) ; when we say that prefixes must be equal, how deep do they have to be to?
 (define COMBINATOR-FILTER 'normal) ; normal (must be normal form), compressed (non-normal forms are okay as long as they are shorter than the normal form), or none (all combinators)
-(define LENGTH-BOUNDS '(2 5 10 MAX-LENGTH)) ; '(1 2 5 10 20));(range MAX-LENGTH)) ; When we search, what are the bounds we search over? Note that 1,2,3,... is particularly inefficient
+(define LENGTH-BOUNDS '(1 2 4 8 16 MAX-LENGTH)) ; '(1 2 5 10 20));(range MAX-LENGTH)) ; When we search, what are the bounds we search over? Note that 1,2,3,... is particularly inefficient
 
 ; How do we define uniqueness when we enforce it? 
 ; Other options include trace-approx-equal? and equal?
