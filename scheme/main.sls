@@ -41,6 +41,7 @@
 (define MAX-FIND 10000)
 (define PREFIX-DEPTH 25) ; when we say that prefixes must be equal, how deep do they have to be to?
 (define COMBINATOR-FILTER 'normal) ; normal (must be normal form), compressed (non-normal forms are okay as long as they are shorter than the normal form), or none (all combinators)
+(define LENGTH-BOUNDS '(2 5 10 MAX-LENGTH)) ; '(1 2 5 10 20));(range MAX-LENGTH)) ; When we search, what are the bounds we search over? Note that 1,2,3,... is particularly inefficient
 
 ; How do we define uniqueness when we enforce it? 
 ; Other options include trace-approx-equal? and equal?
@@ -52,7 +53,7 @@
                                 (member "--verbose" ARGS))) ; display the outermost search to show progress?
 (define SHOW-BACKTRACKING   (member "--verbose" ARGS)) ;; show all stages of the backtracking search?
 
-(define CONSTRAINT-SORT 'vertex-cover) ; random or vertex-cover
+(define CONSTRAINT-SORT 'vertex-cover) ; random, vertex-cover, or none
 
 ;; Counters
 (define GLOBAL-BACKTRACK-COUNT 0) ;; how many times have we called backtrack?
@@ -462,7 +463,11 @@
             (good-ordering (order-constraints constraints
                                               defines
                                               best-of-all-covers)))
-       (set! constraints good-ordering)))])
+       (set! constraints good-ordering)))]
+  [(equal? CONSTRAINT-SORT 'none)  
+   (begin
+     (displayn "# Not sorting constraints"))]
+  )
 
 (displayn "# Best order is: " (compute-complexity constraints defines))
 
@@ -470,7 +475,7 @@
 ; Here we manage the outermost constraint so we can vary that across
 ; parallel threads     
 (displaynerr "# Starting outer stream") (flush-output-port (current-output-port))
-(for length-bound in (range MAX-LENGTH)
+(for length-bound in LENGTH-BOUNDS
   (displaynerr "# Running with length bound " length-bound " found " found-count)
   (stream-for-each (lambda (v) 
                      (let* ((c           (car constraints)); figure out what the first thing to define is 
