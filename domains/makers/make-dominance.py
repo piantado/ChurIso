@@ -14,7 +14,7 @@ for n in xrange(2,5+1):
         
         print >>f, """
 [unique True %s]
-[define True K]
+[define True (K K)]
 """ % ' '.join(map(i2s, range(n+1)))
         
         for i,j in product(range(n+1), range(n+1)):
