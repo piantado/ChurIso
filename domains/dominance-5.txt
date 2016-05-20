@@ -1,6 +1,6 @@
 
 unique True a b c d e f
-True := K
+True := (K K)
 
 True = (dom a b)
 True = (dom a c)

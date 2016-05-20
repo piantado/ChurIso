@@ -1,6 +1,6 @@
 
 unique True a b c
-True := K
+True := (K K)
 
 True = (dom a b)
 show (dom a c)
