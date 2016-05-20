@@ -36,12 +36,11 @@
 (define PARALLEL-SKIP  (string->number (fourth ARGS))) 
 (displaynerr "# Running with " PARALLEL-START " " PARALLEL-SKIP)
 
-(define MAX-LENGTH 20) ; overall total max for use in search
+(define MAX-LENGTH 20) ; max length of combinators that are allowed
 (define EOR #\nul) ; The end of record. Using #\nul will let you sort -z with multiline output
 (define MAX-FIND 10000)
 (define PREFIX-DEPTH 25) ; when we say that prefixes must be equal, how deep do they have to be to?
 (define COMBINATOR-FILTER 'normal) ; normal (must be normal form), compressed (non-normal forms are okay as long as they are shorter than the normal form), or none (all combinators)
-(define LENGTH-BOUNDS '(1 2 4 8 16 MAX-LENGTH)) ; '(1 2 5 10 20));(range MAX-LENGTH)) ; When we search, what are the bounds we search over? Note that 1,2,3,... is particularly inefficient
 
 ; How do we define uniqueness when we enforce it? 
 ; Other options include trace-approx-equal? and equal?
@@ -337,8 +336,13 @@
 ; Main backtracking
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+; The i'th value of this vector gives the *lower* bound when there are i
+; constraints left. This is used to prevent re-searching
+(define backtrack-bounder (make-vector (+ 1 (length constraints)) 1))
+
 ;; now constraints can contain lists, where the second element gives the max length* of the combinator we map to
-(define (backtrack return constraints x length-bound)
+(define (backtrack is-outer return myconstraints x total-complexity-bound)
+  ; is-outer tells us if we're an outermost (first) constraint, where we may have to skip with PARALLEL variables
   ; return is a call/cc for backtracking
   ; constraints encodes the current constraints to be defined
   ; x is a list of things that are defined (variable value), an assoc list
@@ -347,9 +351,9 @@
   
   (set! GLOBAL-BACKTRACK-COUNT (+ GLOBAL-BACKTRACK-COUNT 1))
   
-  (if (null? constraints) 
+  (if (null? myconstraints) 
       (display-winner x) ;; good news!
-      (let* ((c           (car constraints))
+      (let* ((c           (car myconstraints))
              (constraint-type (first c))
              (lhs         (second c))
              (rhs         (third c))
@@ -360,22 +364,32 @@
              (undefined-rhs (filter definable (flatten rhs)))
              )
         
-       ;(displayn "\tc = " c)
-       ;(displayn "\tx = " x)
-       ;(displayn "\tundefined-rhs = " undefined-rhs)
-       ;(displayn "\tundefined-lhs = " undefined-lhs)
+        ;(displayn "\tc = " c)
+        ;(displayn "\tx = " x)
+        ;(displayn "\tundefined-rhs = " undefined-rhs)
+        ;(displayn "\tundefined-lhs = " undefined-lhs)
+        ;(displayn (length constraints) backtrack-bounder total-complexity-bound)
         
+        ;; check/update backtrack-bounder
+        (if (<= total-complexity-bound (vector-ref backtrack-bounder (length myconstraints)))
+            (return)) ;; cannot satisfy
+            
+        
+
         (cond           
+          
+          
           ; if we have defined everything
+          ; NOTE: We could write with eval, but that might make fanciness harder later
           [(and (null? undefined-lhs) (null? undefined-rhs))
-           (if (cond [(eqv? constraint-type 'normal-form-equal?)     (normal-form-equal?     (substitute lhs x) (substitute rhs x))] ; NOTE: We could write with eval, but that might make fanciness harder later
+           (if (cond [(eqv? constraint-type 'normal-form-equal?)     (normal-form-equal?     (substitute lhs x) (substitute rhs x))]
                      [(eqv? constraint-type 'normal-form-unequal?)   (normal-form-unequal?   (substitute lhs x) (substitute rhs x))]
                      [(eqv? constraint-type 'not-normal-form-equal?) (not-normal-form-equal? (substitute lhs x) (substitute rhs x))]
                      [(eqv? constraint-type 'trace-approx-equal?)    (trace-approx-equal?    (substitute lhs x) (substitute rhs x))]
                      [(eqv? constraint-type 'normal-form-in?)        (normal-form-in?        (substitute lhs x) (substitute rhs x))]
                      )
-               ; If we satisfy this constraint
-               (backtrack return (cdr constraints) x length-bound)
+               ; If we satisfy this constraint, no complexity penalty
+               (backtrack #f return (cdr myconstraints) x total-complexity-bound)
                (return))]
           
           ; Push a constraint <-
@@ -388,7 +402,7 @@
                       (is-valid? reduced-rhs)
                       (not (uses-variable? reduced-rhs)) ;; cannot push variable names
                       (<= (length (flatten reduced-rhs)) (value-of lhs limits +inf.0))) ;; enforce depth bound
-                 (backtrack return (cdr constraints) (cons (list lhs reduced-rhs) x) length-bound)
+                 (backtrack #f return (cdr myconstraints) (cons (list lhs reduced-rhs) x) total-complexity-bound)
                  (return)))] ;;otherwise add and recurse
           
           
@@ -402,23 +416,35 @@
                       (is-valid? reduced-lhs)
                       (not (uses-variable? reduced-lhs)) ;; cannot push variable names
                       (<= (length (flatten reduced-lhs)) (value-of rhs limits +inf.0))) ;; enforce depth bound
-                 (backtrack return (cdr constraints) (cons (list rhs reduced-lhs) x) length-bound)
+                 (backtrack #f return (cdr myconstraints) (cons (list rhs reduced-lhs) x) total-complexity-bound)
                  (return)))] ;;otherwise add and recurse
           
           ;; else we must search
           [ #t  (let* ((to-define (first (append undefined-rhs undefined-lhs))))
-                  ;(displayn "HERE " to-define length-bound)
+                  
+                  
+                  
+                  ;(displayn "HERE " to-define total-complexity-bound)
                   (stream-for-each (lambda (v) 
                                      ; Display if we should
-                                     (if SHOW-BACKTRACKING
-                                         (displaynerr (string-repeat "\t" (length x)) ; tab to show progress
-                                                      "Trying " to-define "=" v "\t with defines " x ))
+                                     (if (or (and is-outer DISPLAY-INCREMENTAL)
+                                             SHOW-BACKTRACKING)
+                                         (begin
+                                           (displaynerr "#" (string-repeat "\t" (length x))  
+                                                        "Trying " to-define " = " v "\t" (length* v) 
+                                                        "\t found\t" found-count "\t" total-complexity-bound)
+                                           (flush-output-port (current-error-port))))
+                                     
                                      ; If we are too long, since we assuem in-order generation, we can return
                                      (if (>= (length (flatten v)) (value-of to-define limits +inf.0))
                                          (return))
                                      
                                      ; else assign and recurse
-                                     (call/cc (lambda (ret) (backtrack ret constraints (cons (list to-define v) x) length-bound)))
+                                     (call/cc (lambda (ret) (backtrack #f
+                                                                       ret 
+                                                                       myconstraints 
+                                                                       (cons (list to-define v) x) 
+                                                                       (- total-complexity-bound (length* v)))))
                                      
                                      null ;; must return a friendly or else scheme goes nuts
                                      )
@@ -428,11 +454,20 @@
                                                   (stream-filter (cond ((eqv? COMBINATOR-FILTER 'normal) is-normal-form?)
                                                                        ((eqv? COMBINATOR-FILTER 'compressed) is-normal-form-or-shorter?)
                                                                        ((eqv? COMBINATOR-FILTER 'none)  (lambda args #t)))
-                                                                 (enumerate-all length-bound COMBINATOR-BASIS)))))]
+                                                                 (stream-skip (if is-outer PARALLEL-SKIP 0)
+                                                                              (stream-drop (if is-outer PARALLEL-START  0) ;; handle parallel processing
+                                                                                           (enumerate-all (- total-complexity-bound (* 1 COMPLEXITY))
+                                                                                                          COMBINATOR-BASIS))))))
+                  
+                  ;; and I've learned that I have to have at least this complexity
+                  ;; so avoid lower-complexity solutions in the future
+                  (vector-set! backtrack-bounder (length myconstraints) (- total-complexity-bound (* 1 COMPLEXITY)))
+                  
+                  )]
           ))))
 
 
-                
+
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -447,7 +482,7 @@
 (displayn "# Optimizing constraint order. Given order is " (compute-complexity constraints defines))
 
 (cond
- [(equal? CONSTRAINT-SORT 'random) ; if we use random solution
+  [(equal? CONSTRAINT-SORT 'random) ; if we use random solution
    (begin
      (displayn "# Using random sort")
      (set! constraints
@@ -469,42 +504,29 @@
      (displayn "# Not sorting constraints"))]
   )
 
-(displayn "# Best order is: " (compute-complexity constraints defines))
+; need this for below to bound the depths
+(define COMPLEXITY (compute-complexity constraints defines))
 
-; Now the actual search
-; Here we manage the outermost constraint so we can vary that across
-; parallel threads     
+(displayn "# Best order is: " COMPLEXITY)
+
+
+
+
+
+; Now the actual search. This searches with a fixed total sum of constraints
+; that increases
+; Here we manage the outermost constraint so we can vary that across parallel threads     
 (displaynerr "# Starting outer stream") (flush-output-port (current-output-port))
-(for length-bound in LENGTH-BOUNDS
-  (displaynerr "# Running with length bound " length-bound " found " found-count)
-  (stream-for-each (lambda (v) 
-                     (let* ((c           (car constraints)); figure out what the first thing to define is 
-                            (lhs         (first c))
-                            (check-equal (equal? (second c) '=))
-                            (rhs         (third c))
-                            (definable   (lambda (a) (not (is-variable? a))))
-                            (undefined-lhs (filter definable (flatten lhs)))
-                            (undefined-rhs (filter definable (flatten rhs)))
-                            (to-define (first (append undefined-rhs undefined-lhs))))
-                       
-                       (if DISPLAY-INCREMENTAL
-                           (begin
-                             (displaynerr "#\t Trying " to-define " = " v "\t" (length (flatten v)) "\t found\t" found-count)
-                             (flush-output-port (current-error-port))))
-                       
-                       (call/cc (lambda (exit) 
-                                  (backtrack exit 
-                                             constraints 
-                                             (cons (list to-define v) defines) 
-                                             length-bound ; iteratively deepeni
-                                             )))))
-                   
-                   (stream-filter (cond ((eqv? COMBINATOR-FILTER 'normal) is-normal-form?)
-                                        ((eqv? COMBINATOR-FILTER 'compressed) is-normal-form-or-shorter?)
-                                        ((eqv? COMBINATOR-FILTER 'none)  (lambda args #t)))
-                                  (stream-skip PARALLEL-SKIP
-                                               (stream-drop PARALLEL-START  ;; handle parallel processing
-                                                            (enumerate-all length-bound COMBINATOR-BASIS))))))
+(for total-complexity-bound in (abrange COMPLEXITY (+ COMPLEXITY MAX-LENGTH)) ;; everything must add up to this exactly
+  (call/cc (lambda (exit) 
+             (backtrack #t
+                        exit 
+                        constraints 
+                        defines
+                        total-complexity-bound
+                        )))
+  )
+
 
 (displaynerr "# Backtrack count: " GLOBAL-BACKTRACK-COUNT)
 (displaynerr "# Found count: " found-count " for " (cdr ARGS))
