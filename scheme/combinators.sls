@@ -1,6 +1,6 @@
 (library 
  (combinators)
- (export enumerate-all enumerate-at enumerate-at-split Isk Bsk Csk)
+ (export enumerate-all abenumerate enumerate-at enumerate-at-split Isk Bsk Csk)
  (import (rnrs) (srfi :41) (vicare) )
  
  ;; #####################################################################################
@@ -22,13 +22,17 @@
  
  ; Stream of all up to n
  (define (enumerate-all nmax BASIS)
+   (abenumerate 1 nmax BASIS))
+
+ 
+  (define (abenumerate nmin nmax BASIS)
    (define (enumerate-all* n nmax BASIS)
      (if (>= n nmax)  
          stream-null
          (stream-append (enumerate-at n BASIS)
                         (enumerate-all* (+ n 1) nmax BASIS))))
-   (enumerate-all* 1 nmax BASIS))
-
+   (enumerate-all* nmin nmax BASIS))
+ 
 ;; Make a recursive loop over all k
  (define (enumerate-at-split n k BASIS)
    ; Enumerate at a given depth n, splitting k off to one side
