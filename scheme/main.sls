@@ -336,12 +336,8 @@
 ; Main backtracking
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-; The i'th value of this vector gives the *lower* bound when there are i
-; constraints left. This is used to prevent re-searching
-(define backtrack-bounder (make-vector (+ 1 (length constraints)) 1))
-
 ;; now constraints can contain lists, where the second element gives the max length* of the combinator we map to
-(define (backtrack is-outer return myconstraints x total-complexity-bound)
+(define (backtrack is-outer return myconstraints x my-complexity-bound)
   ; is-outer tells us if we're an outermost (first) constraint, where we may have to skip with PARALLEL variables
   ; return is a call/cc for backtracking
   ; constraints encodes the current constraints to be defined
@@ -362,23 +358,16 @@
                                            (not (is-variable? a)))))
              (undefined-lhs (filter definable (flatten lhs)))
              (undefined-rhs (filter definable (flatten rhs)))
+             (initial-found-count found-count)
              )
         
         ;(displayn "\tc = " c)
         ;(displayn "\tx = " x)
         ;(displayn "\tundefined-rhs = " undefined-rhs)
         ;(displayn "\tundefined-lhs = " undefined-lhs)
-        ;(displayn (length constraints) backtrack-bounder total-complexity-bound)
         
-        ;; check/update backtrack-bounder
-        (if (<= total-complexity-bound (vector-ref backtrack-bounder (length myconstraints)))
-            (return)) ;; cannot satisfy
-            
         
-
         (cond           
-          
-          
           ; if we have defined everything
           ; NOTE: We could write with eval, but that might make fanciness harder later
           [(and (null? undefined-lhs) (null? undefined-rhs))
@@ -389,7 +378,7 @@
                      [(eqv? constraint-type 'normal-form-in?)        (normal-form-in?        (substitute lhs x) (substitute rhs x))]
                      )
                ; If we satisfy this constraint, no complexity penalty
-               (backtrack #f return (cdr myconstraints) x total-complexity-bound)
+               (backtrack #f return (cdr myconstraints) x my-complexity-bound)
                (return))]
           
           ; Push a constraint <-
@@ -402,7 +391,7 @@
                       (is-valid? reduced-rhs)
                       (not (uses-variable? reduced-rhs)) ;; cannot push variable names
                       (<= (length (flatten reduced-rhs)) (value-of lhs limits +inf.0))) ;; enforce depth bound
-                 (backtrack #f return (cdr myconstraints) (cons (list lhs reduced-rhs) x) total-complexity-bound)
+                 (backtrack #f return (cdr myconstraints) (cons (list lhs reduced-rhs) x) my-complexity-bound)
                  (return)))] ;;otherwise add and recurse
           
           
@@ -416,26 +405,20 @@
                       (is-valid? reduced-lhs)
                       (not (uses-variable? reduced-lhs)) ;; cannot push variable names
                       (<= (length (flatten reduced-lhs)) (value-of rhs limits +inf.0))) ;; enforce depth bound
-                 (backtrack #f return (cdr myconstraints) (cons (list rhs reduced-lhs) x) total-complexity-bound)
+                 (backtrack #f return (cdr myconstraints) (cons (list rhs reduced-lhs) x) my-complexity-bound)
                  (return)))] ;;otherwise add and recurse
           
           ;; else we must search
           [ #t  (let* ((to-define (first (append undefined-rhs undefined-lhs))))
-                  
-                  
-                  
-                  ;(displayn "HERE " to-define total-complexity-bound)
                   (stream-for-each (lambda (v) 
                                      ; Display if we should
                                      (if (or (and is-outer DISPLAY-INCREMENTAL)
                                              SHOW-BACKTRACKING)
-                                         (begin
-                                           (displaynerr "#" (string-repeat "\t" (length x))  
-                                                        "Trying " to-define " = " v "\t" (length* v) 
-                                                        "\t found\t" found-count "\t" total-complexity-bound)
-                                           (flush-output-port (current-error-port))))
+                                         (displaynerr "#" (string-repeat "\t" (length x))  
+                                                      "Trying " to-define " = " v "\t with length " (length* v) 
+                                                      ".\t Found\t" found-count ". Next bound is " my-complexity-bound))
                                      
-                                     ; If we are too long, since we assuem in-order generation, we can return
+                                     ; If we are too long, since we assume in-order generation, we can return
                                      (if (>= (length (flatten v)) (value-of to-define limits +inf.0))
                                          (return))
                                      
@@ -444,7 +427,7 @@
                                                                        ret 
                                                                        myconstraints 
                                                                        (cons (list to-define v) x) 
-                                                                       (- total-complexity-bound (length* v)))))
+                                                                       (- my-complexity-bound (length* v)))))
                                      
                                      null ;; must return a friendly or else scheme goes nuts
                                      )
@@ -456,14 +439,8 @@
                                                                        ((eqv? COMBINATOR-FILTER 'none)  (lambda args #t)))
                                                                  (stream-skip (if is-outer PARALLEL-SKIP 0)
                                                                               (stream-drop (if is-outer PARALLEL-START  0) ;; handle parallel processing
-                                                                                           (enumerate-all (- total-complexity-bound (* 1 COMPLEXITY))
-                                                                                                          COMBINATOR-BASIS))))))
-                  
-                  ;; and I've learned that I have to have at least this complexity
-                  ;; so avoid lower-complexity solutions in the future
-                  (vector-set! backtrack-bounder (length myconstraints) (- total-complexity-bound (* 1 COMPLEXITY)))
-                  
-                  )]
+                                                                                           (enumerate-all (- my-complexity-bound (* 1 COMPLEXITY))
+                                                                                                          COMBINATOR-BASIS))))))  )]
           ))))
 
 
@@ -479,19 +456,19 @@
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-(displayn "# Optimizing constraint order. Given order is " (compute-complexity constraints defines))
+(displaynerr "# Optimizing constraint order. Given order is " (compute-complexity constraints defines))
 
 (cond
   [(equal? CONSTRAINT-SORT 'random) ; if we use random solution
    (begin
-     (displayn "# Using random sort")
+     (displaynerr "# Using random sort")
      (set! constraints
            (random-optimize-constraints compute-complexity
                                         constraints
                                         defines)))]
   [(equal? CONSTRAINT-SORT 'vertex-cover) ; if we use vertex-cover solution
    (begin
-     (displayn "# Using vertex-cover sort")
+     (displaynerr "# Using vertex-cover sort")
      (let* ((symbols (list-symbols (map cdr constraints)))
             (graph (make-graph all-input))
             (best-of-all-covers (choose-best-cover (make-all-vertex-covers graph)))
@@ -501,13 +478,13 @@
        (set! constraints good-ordering)))]
   [(equal? CONSTRAINT-SORT 'none)  
    (begin
-     (displayn "# Not sorting constraints"))]
+     (displaynerr "# Not sorting constraints"))]
   )
 
 ; need this for below to bound the depths
 (define COMPLEXITY (compute-complexity constraints defines))
 
-(displayn "# Best order is: " COMPLEXITY)
+(displaynerr "# Best order is: " COMPLEXITY)
 
 
 
