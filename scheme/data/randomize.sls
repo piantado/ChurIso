@@ -1,7 +1,7 @@
 ; Old version of optimizing constraint order by 
 ; random shuffling 
 (library 
- (randomize-constraints)
+ (data randomize)
  (export random-optimize-constraints)
  (import (rnrs) (vicare) (stp-lib) )
 

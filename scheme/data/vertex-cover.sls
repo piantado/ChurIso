@@ -11,7 +11,7 @@
 ;;;; ###########################################################################
 ;;;; ###########################################################################
 
-(library (order-constraints)
+(library (data vertex-cover)
   (export make-graph make-vertex-cover make-n-vertex-covers
           make-all-vertex-covers choose-best-cover order-constraints list-symbols
           test-order-constraints)
@@ -55,10 +55,10 @@
                                           (cons y xs)))))
       (fold-right add-if-new '() all-edges)))
 
-  (define (make-graph input)
-    (let* ((constraints (map cdr (list-constraints input)))
-           (nodes (list-symbols constraints))
-           (edges (list-edges (map list-symbols constraints))))
+  (define (make-graph constraints)
+    (let* ((cs (map cdr constraints))
+           (nodes (list-symbols cs))
+           (edges (list-edges (map list-symbols cs))))
       (list nodes edges)))
 
   (define (make-vertex-cover g)

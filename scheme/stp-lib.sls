@@ -4,7 +4,7 @@
          flatten append apply-append unlist-singleton str-split is-comment-line? is-blank-line? load-file has-value value-of range all any abrange
          string->S-expression drop assert-equal repeat string-repeat mydisplay last length* shuffle
          uniquify nth random-element set-difference minimum maximum set-symmetric-difference range0
-         set-union set-intersection best-by-score
+         set-union set-intersection best-by-score flip take zip insert inserts sub-f value-of2
          )
  (import (rnrs) (vicare)) ;  (rnrs io (6)) 
  
@@ -36,6 +36,8 @@
    )
  
  (define null '() )
+
+ (define (singleton? lst) (= (length lst) 1))
  
  (define (first x)  (car x))
  (define (second x) (cadr x))
@@ -74,7 +76,12 @@
 
  (define member? member)
 
-  
+ ;; like map, but recurses down lists of lists, applying l
+ (define (sub-f f l)
+   (cond [(null? l)  null]
+         [(list? l)  (map (lambda (li) (sub-f f li)) l)]
+         [ #t        (f l) ]))
+
   
  
  (define (drop n x)
@@ -146,10 +153,10 @@
        (+ 1 (apply max (map depth x)))
        0))
  
- (define (take-n n lst)
+ (define (take n xs)
    (if (= n 0)
        '()
-       (cons (car lst) (take-n (- n 1) (cdr lst)))))
+       (cons (car xs) (take (- n 1) (cdr xs)))))
  
  (define (count f s)
    (if (null? s)
@@ -180,7 +187,7 @@
   
  (define (repeat x n)
    (if (= n 0)
-       x
+       '()
        (cons x (repeat x (- n 1)))))
 
  (define (uniquify xs)
@@ -189,6 +196,19 @@
                                    (cons x acc)))
                '()
                xs))
+
+  (define (zip xs ys)
+    (if (or (null? xs) (null? ys))
+        '()
+        (cons (cons (car xs) (car ys))
+              (zip (cdr xs) (cdr ys)))))
+
+  (define (insert pre x post)
+    (append pre (cons x post)))
+
+  (define (inserts pre xs post)
+    (map (lambda (x) (insert pre x post)) xs))
+
 
  (define (minimum xs) (fold-right min (car xs) (cdr xs)))
  (define (maximum xs) (fold-right max (car xs) (cdr xs)))
@@ -226,7 +246,14 @@
      (if aa
          (second aa)
          default)))
- 
+
+ ;; Assoc list -- get a value with a default
+ (define (value-of2 k x default)
+   (let ((aa (assoc k x)))
+     (if aa
+         (cdr aa)
+         default)))
+
  ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  ; Loading data files
  ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
