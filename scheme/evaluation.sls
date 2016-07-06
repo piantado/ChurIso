@@ -1,7 +1,10 @@
 (library 
  (evaluation)
- (export get-reduction-count reduce reduce-partial rebracket NON-HALT set-MAXes!)
- (import (rnrs) (vicare) (stp-lib) (rnrs hashtables (6)) )
+ (export get-reduction-count reduce reduce-partial rebracket NON-HALT set-MAXes!
+         is-normal-form? is-normal-form-or-shorter?
+         are-combinators-equal? normal-form-equal? not-normal-form-equal?
+         normal-form-unequal? trace-approx-equal? normal-form-in? is-valid?)
+ (import (rnrs) (vicare) (stp-lib))
  
  ;; #####################################################################################
  ;; #####################################################################################
@@ -103,6 +106,87 @@
            x)))
  ;(rebracket '(a b c d e f))
  ;(rebracket '((a x v (w z y)) (b y z) c))
+
+; we only have to look at combinators that cannot be reduced, since
+; if they can be reduced, we will find them elsewhere in the search
+; This means that when try something, we never will need to reduce it
+(define (is-normal-form? x)
+  (let ((rx (reduce x)))
+    (and (is-valid? rx)
+         (equal? (rebracket rx) x))))
+
+(define (is-normal-form-or-shorter? x)
+  ; True if its a normal form OR its normal form is longer then its current form
+  ; This is useful for excluding 
+  (let ((rx (reduce x)))
+    (and (is-valid? rx)
+         (<= (length* rx) (length* x)))))
+
+; check if a reduced form is "valid"     
+(define (is-valid? x)
+  (and (not (equal? x NON-HALT))
+       (not (equal? x '()))))
+
+
+; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; Checking equality under reduction
+; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+(define (are-combinators-equal? lhs rhs parameter)
+  (cond
+   [(equal? 'normal (parameter 'COMBINATOR-EQUALITY))
+    (normal-form-equal? lhs rhs)]
+   [(equal? 'trace (parameter 'COMBINATOR-EQUALITY))
+    (trace-approx-equal? lhs rhs parameter)]
+   [(equal? 'equal (parameter 'COMBINATOR-EQUALITY))
+    (equal? lhs rhs)]))
+
+(define (normal-form-equal? lhs rhs)
+  (let ((reduced-lhs (reduce lhs))
+        (reduced-rhs (reduce rhs)))
+    (and (is-valid? reduced-lhs) ;; if there is a problem, return; else remove constraint and recurse
+         (is-valid? reduced-rhs)
+         (equal? (rebracket reduced-rhs) (rebracket reduced-lhs)))))
+
+(define (not-normal-form-equal? lhs rhs)
+  (not (normal-form-equal? lhs rhs)))
+
+(define (normal-form-unequal? lhs rhs)
+  ; This would be the same as (not (normal-form-equal ..)) except that
+  ; we don't want to count NON-HALT as satisfying !=
+  (let ((reduced-lhs (reduce lhs))
+        (reduced-rhs (reduce rhs)))
+    (and (is-valid? reduced-lhs) ;; if there is a problem, return; else remove constraint and recurse
+         (is-valid? reduced-rhs)
+         (not (equal? (rebracket reduced-rhs) (rebracket reduced-lhs))))))
+
+; check if the partial evaluations are equal
+(define (trace-approx-equal? lhs rhs params)
+  (>= (prefix-check (reduce-partial lhs)
+                    (reduce-partial rhs))
+      (params 'PREFIX-DEPTH)))
+
+(define (normal-form-in? x ys)
+  (any (lambda (y) (normal-form-equal? x y))
+       ys))
+
+(define (prefix-check x y)
+  ; how many symbols do I have to look at to find they're not equal?
+  ; (NOTE: I check the lengths of each list, so I may not need to recurse into it. 
+  (if (or (not (eqv? (list? x) (list? y)))
+          (and (list? x) (not (= (length x) (length y)))))
+      0
+      (if (list? x)
+          (if (null? x) ; and must have null y
+              +inf.0
+              (+ 1 (min (prefix-check (car x) (car y))
+                        (prefix-check (cdr x) (cdr y)))))
+          (if (eqv? x y) +inf.0 0))))
+;(prefix-check '(a a (c d) b (a b (c d))) '(a a (d d) b (a b (c d e))))
+
+;(displayn (trace-approx-equal? '((S (K (S I I)) (S (S (K S) K) (K (S I I)))) f)
+;                               '(f ((S (K (S I I)) (S (S (K S) K) (K (S I I)))) f))
+;                               ))
+
  
  )
-

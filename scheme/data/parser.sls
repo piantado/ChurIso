@@ -2,15 +2,15 @@
 ; simple syntax transformation to S-expressions that are 
 ; are interpreted by main.sls
 (library 
- (parser)
+ (data parser)
  (export load-and-parse get-input)
- (import (rnrs)  (stp-lib)  (vicare) (rnrs eval (6)) (grammar))
+ (import (rnrs)  (stp-lib)  (vicare) (rnrs eval (6)) (data grammar))
  
- ; This environment is jsut that of "grammar", which defines
+ ; This environment is just that of "grammar", which defines
  ; the macro %churiso-parse% that turns ChurIso source code into 
  ; a list of constraints
  (define PARSER-ENVIRONMENT
-   (environment '(grammar) '(rnrs) '(vicare) ))
+   (environment '(data grammar) '(rnrs) '(vicare) ))
  
  (define (load-and-parse in)
    (let ((l (get-line in)))
@@ -26,11 +26,8 @@
 
  (define (get-input file) ; a convenience wrapper
    (load-and-parse (open-input-file file)))
- 
- ;(define all-input (get-input "tmp.txt")))
- ;(displaynerr all-input)
- 
- )
+
+ ) ;; end library
 
 
 

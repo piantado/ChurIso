@@ -1,7 +1,8 @@
 (library 
  (combinators)
- (export enumerate-all abenumerate enumerate-at enumerate-at-split Isk Bsk Csk)
- (import (rnrs) (srfi :41) (vicare) )
+ (export enumerate-all abenumerate enumerate-at enumerate-at-split enumerate-trees Isk Bsk Csk)
+ (import (rnrs) (srfi :41) (vicare)
+         (stp-lib))
  
  ;; #####################################################################################
  ;; #####################################################################################
@@ -49,8 +50,23 @@
                     (if (> k 1)
                         (enum-rec n (- k 1))
                         stream-null)))   
-   
    (enum-rec n (- n 1)))
+
+
+ ;; given a flattened list of sub-combinators, create a stream of
+ ;; trees that list might represent.
+ (define (enumerate-trees xs)
+   (define (enum-tree-at-split xs ys)
+     (stream-of (list x y)
+                (x in (enumerate-trees xs))
+                (y in (enumerate-trees ys))))
+   (define (enum-rec xs k)
+     (stream-append (enum-tree-at-split (take k xs) (drop k xs))
+                    (if (> k 1)
+                        (enum-rec xs (- k 1))
+                        stream-null)))
+   (cond
+    ((<= (length xs) 1) (list->stream xs))
+    (else (enum-rec xs (- (length xs) 1)))))
  
- 
- )
+ ) ; end library
