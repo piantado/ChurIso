@@ -64,7 +64,7 @@
     (let* ((defines (data 'DEFINES))
            (vars (data 'VARIABLES))
            (complexity1 (compute-complexity constraints defines vars))
-           (xyz (f constraints defines data))
+           (unknown (f constraints defines data))
            (complexity2 (compute-complexity (data 'CONSTRAINTS) defines vars)))
       (begin
         (displaynerr "# Initial order is " complexity1)
@@ -81,12 +81,12 @@
 
   (define (vertex-sort constraints defines data)
     (displaynerr "# Optimizing constraints with vertex-cover")
-    (let* ((symbols (list-symbols (map cdr constraints)))
-           (graph (make-graph constraints))
+    (let* ((graph (make-graph constraints))
            (best-of-all-covers (choose-best-cover (make-all-vertex-covers graph)))
            (good-ordering (order-constraints constraints
                                              defines
-                                             best-of-all-covers)))
+                                             best-of-all-covers))
+           (symbols (uniquify (flatten (map cdr good-ordering)))))
       (data 'set
             (list 'CONSTRAINTS good-ordering)
             (list 'SYMBOLS symbols)
